@@ -62,7 +62,7 @@ func productGet(conn *pgx.Conn, id int) Product {
 	fmt.Println("Getting product name")
 	sql_select := fmt.Sprintf("SELECT name, image_url, price, description FROM products WHERE id=%v", id)
 
-	product := Product{}
+	product := Product{Id: id}
 	handleError(database.QueryRow(conn, sql_select, &product.Name, &product.Image_url, &product.Price, &product.Description))
 
 	return product

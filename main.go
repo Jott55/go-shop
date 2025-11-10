@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/docgen"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -143,6 +144,9 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	product := productGet(shopDB, id)
+
+	fmt.Println(product)
+
 	w.Header().Set("Content-Type", "application/json")
 	content, err := json.Marshal(product)
 	handleErrorCustom(err, "product json")
@@ -235,6 +239,10 @@ func doRouterShit() {
 
 	router.Get("/", mainPage)
 
+	router.Get("/generate", func(w http.ResponseWriter, r *http.Request) {
+		generateMarkdown(router)
+	})
+
 	router.Get("/admin", admin)
 
 	router.Get("/product", getProductsSimplyfied)
@@ -250,8 +258,33 @@ func doRouterShit() {
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
 
+}
+
+func generateMarkdown(router *chi.Mux) {
+	data := docgen.MarkdownRoutesDoc(router, docgen.MarkdownOpts{})
+
+	if err := os.Remove("routes.md"); err != nil && os.IsExist(err) {
+		slog.Error(err.Error())
+		return
+	}
+
+	file, err := os.Create("route.md")
+
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	_, err = file.Write([]byte(data))
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
+
+	defer file.Close()
 }
 
 func noDb() {
