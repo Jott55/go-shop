@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"jott55/go-shop/database"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -21,6 +22,10 @@ type Product struct {
 	Image_url   string
 	Price       int
 	Description string
+}
+
+type ProductRequest struct {
+	Product Product
 }
 
 func productInsert(conn *pgx.Conn, product Product) {
@@ -85,7 +90,7 @@ func handleResponse(res pgconn.CommandTag, err error) {
 
 func handleError(err error) {
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err.Error())
 	}
 }
 
