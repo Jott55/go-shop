@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type Database struct {
+type DatabaseInfo struct {
 	User     string
 	Password string
 	Host     string
@@ -17,39 +17,50 @@ type Database struct {
 }
 
 type DatabaseLink struct {
-	info *Database
+	info *DatabaseInfo
 	con  *pgx.Conn
 }
 
-// aways remember to Close
-func Init(db Database) (*pgx.Conn, error) {
+func Create() *DatabaseLink {
+	return &DatabaseLink{}
+}
+
+func Configure(dl *DatabaseLink, dinfo DatabaseInfo) {
+	dl.info = &dinfo
+}
+
+func Init(dl *DatabaseLink) error {
+	db := dl.info
 
 	if db.User == "" || db.Password == "" || db.Host == "" || db.Port == "" || db.Database == "" {
-		return nil, fmt.Errorf("no database credentials")
+		return fmt.Errorf("no database credentials")
 	}
 
 	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.Database)
 	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return conn, nil
+
+	dl.con = conn
+
+	return nil
 }
 
-func Exec(conn *pgx.Conn, sql string) (pgconn.CommandTag, error) {
-	return conn.Exec(context.Background(), sql)
+func Exec(dl *DatabaseLink, sql string) (pgconn.CommandTag, error) {
+	return dl.con.Exec(context.Background(), sql)
 }
 
-func Close(conn *pgx.Conn) error {
-	return conn.Close(context.Background())
+func Close(dl *DatabaseLink) error {
+	return dl.con.Close(context.Background())
 }
 
-func QueryRow(conn *pgx.Conn, sql string, dest ...any) error {
-	return conn.QueryRow(context.Background(), sql).Scan(dest...)
+func QueryRow(dl *DatabaseLink, sql string, dest ...any) error {
+	return dl.con.QueryRow(context.Background(), sql).Scan(dest...)
 }
 
-func Query(conn *pgx.Conn, sql string) (pgx.Rows, error) {
-	return conn.Query(context.Background(), sql)
+func Query(dl *DatabaseLink, sql string) (pgx.Rows, error) {
+	return dl.con.Query(context.Background(), sql)
 }
 
 func IsError(err error) {
