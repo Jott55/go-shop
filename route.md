@@ -11,7 +11,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/**
 	- _GET_
-		- [main.mainPage]()
+		- [mainPage]()
 
 </details>
 <details>
@@ -21,7 +21,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/admin**
 	- _GET_
-		- [main.admin]()
+		- [admin]()
 
 </details>
 <details>
@@ -31,7 +31,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/generate**
 	- _GET_
-		- [main.doRouterShit.func1]()
+		- [doRouterShit.func1]()
 
 </details>
 <details>
@@ -41,7 +41,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/images/{name}**
 	- _GET_
-		- [main.getImage]()
+		- [getImage]()
 
 </details>
 <details>
@@ -51,7 +51,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/post/product**
 	- _POST_
-		- [main.insertProduct]()
+		- [insertProduct]()
 
 </details>
 <details>
@@ -61,7 +61,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/product**
 	- _GET_
-		- [main.getProductsSimplyfied]()
+		- [getProductsSimplyfied]()
 
 </details>
 <details>
@@ -71,7 +71,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/product/{id}**
 	- _GET_
-		- [main.getProduct]()
+		- [getProduct]()
 
 </details>
 <details>
@@ -81,7 +81,7 @@
 - [o-chi/cors.(*Cors).Handler-fm]()
 - **/product/{id}/delete**
 	- _GET_
-		- [main.deleteProduct]()
+		- [deleteProduct]()
 
 </details>
 
