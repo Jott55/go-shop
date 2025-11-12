@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -13,6 +14,11 @@ type Database struct {
 	Host     string
 	Port     string
 	Database string
+}
+
+type DatabaseLink struct {
+	info *Database
+	con  *pgx.Conn
 }
 
 // aways remember to Close
@@ -44,4 +50,8 @@ func QueryRow(conn *pgx.Conn, sql string, dest ...any) error {
 
 func Query(conn *pgx.Conn, sql string) (pgx.Rows, error) {
 	return conn.Query(context.Background(), sql)
+}
+
+func IsError(err error) {
+
 }

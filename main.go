@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"jott55/go-shop/database"
+	"log"
 	"net/http"
 	"os"
+	"runtime"
 
 	"encoding/json"
-	"log/slog"
 
 	"strconv"
 	"strings"
@@ -40,7 +41,8 @@ func startDatabase() {
 
 	if err != nil {
 		var str string
-		slog.Error(err.Error())
+		database.IsError(err)
+		// clog(ERROR, err)
 		fmt.Println("want to continue anyway? (y/n) change config (c)? rerun? (r)")
 		fmt.Scanf("%s", &str)
 		if strings.ToLower(str) == "n" {
@@ -66,7 +68,7 @@ func startDatabase() {
 
 func checkError(err error) {
 	if err != nil {
-		slog.Error(err.Error())
+		clog(ERROR, err)
 	}
 }
 
@@ -122,7 +124,11 @@ func createConfigFile(name string) {
 	db := getDatabaseInfoFromUser()
 
 	data, err := json.Marshal(db)
-	checkError(err)
+
+	if err != nil {
+		clog(ERROR, err)
+		return
+	}
 
 	file.Write(data)
 
@@ -135,7 +141,7 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(product_id_param)
 
 	if err != nil {
-		slog.Error(err.Error(), "product of id: ", id)
+		clog(ERROR, err, "product of id: ", id)
 	}
 
 	if shopDB == nil {
@@ -143,13 +149,23 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product := productGet(shopDB, id)
+	product, err := productGet(shopDB, id)
+
+	if err != nil {
+		clog(ERROR, err)
+		return
+	}
 
 	fmt.Println(product)
 
 	w.Header().Set("Content-Type", "application/json")
 	content, err := json.Marshal(product)
-	handleErrorCustom(err, "product json")
+
+	if err != nil {
+		clog(ERROR, err)
+		return
+	}
+	clog(DEBUG, "product json")
 	w.Write(content)
 }
 
@@ -160,10 +176,19 @@ func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pd := productGetAllSimplyfied(shopDB, 0, 100000)
+	pd, err := productGetAllSimplyfied(shopDB, 0, 100000)
+
+	if err != nil {
+		clog(ERROR, err)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	content, err := json.Marshal(pd)
-	handleErrorCustom(err, "Json was created")
+
+	if err != nil {
+		clog(ERROR, err)
+	}
+	clog(DEBUG, "Json was created ")
 	w.Write(content)
 }
 
@@ -172,7 +197,9 @@ func insertProduct(w http.ResponseWriter, r *http.Request) {
 	var product ProductRequest
 
 	err := json.NewDecoder(r.Body).Decode(&product)
-	handleError(err)
+	if err != nil {
+		clog(ERROR, err)
+	}
 
 	if shopDB == nil {
 		noDb()
@@ -190,7 +217,9 @@ func insertProduct(w http.ResponseWriter, r *http.Request) {
 func deleteProduct(w http.ResponseWriter, r *http.Request) {
 	product_id_param := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(product_id_param)
-	handleError(err)
+	if err != nil {
+		clog(ERROR, err)
+	}
 
 	if shopDB == nil {
 		noDb()
@@ -207,7 +236,9 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 func getImage(w http.ResponseWriter, r *http.Request) {
 	product_name_param := chi.URLParam(r, "name")
 	img, err := os.ReadFile(fmt.Sprintf("images/%s", product_name_param))
-	handleError(err)
+	if err != nil {
+		clog(ERROR, err)
+	}
 
 	w.Write(img)
 }
@@ -215,13 +246,16 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 func admin(w http.ResponseWriter, r *http.Request) {
 	file, err := os.ReadFile("admin.html")
 
-	handleErrorCustom(err, "Admin page")
+	if err != nil {
+		clog(ERROR, err)
+	}
+	clog(DEBUG, "admin page")
 	w.Write(file)
 }
 
 func doRouterShit() {
 
-	slog.Info("initializing router")
+	clog(INFO, "initializing router")
 
 	router := chi.NewRouter()
 
@@ -257,7 +291,7 @@ func doRouterShit() {
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
-		slog.Error(err.Error())
+		clog(ERROR, err)
 		return
 	}
 
@@ -267,20 +301,20 @@ func generateMarkdown(router *chi.Mux) {
 	data := docgen.MarkdownRoutesDoc(router, docgen.MarkdownOpts{})
 
 	if err := os.Remove("routes.md"); err != nil && os.IsExist(err) {
-		slog.Error(err.Error())
+		clog(ERROR, err)
 		return
 	}
 
 	file, err := os.Create("route.md")
 
 	if err != nil {
-		slog.Error(err.Error())
+		clog(ERROR, err)
 		return
 	}
 
 	_, err = file.Write([]byte(data))
 	if err != nil {
-		slog.Error(err.Error())
+		clog(ERROR, err)
 		return
 	}
 
@@ -288,5 +322,41 @@ func generateMarkdown(router *chi.Mux) {
 }
 
 func noDb() {
-	slog.Error("no db connection, returning")
+	clog(ERROR, "no db connection, returning")
 }
+
+func clog(level Level, info ...any) {
+	clogger(level, 2, info...)
+}
+
+func clogger(level Level, skip int, info ...any) {
+
+	var logger = log.New(os.Stdout, "Log: ", log.LstdFlags)
+
+	switch level {
+	case ERROR:
+		logger.SetPrefix("ERROR: ")
+		pc, filename, line, _ := runtime.Caller(skip)
+		logger.Printf("at %s: %s %d\n\t%v", runtime.FuncForPC(pc).Name(), filename, line, info)
+	case INFO:
+		logger.SetPrefix("INFO: ")
+		logger.Println(info...)
+	case DEBUG:
+		logger.SetPrefix("DEBUG: ")
+		logger.Println(info...)
+	case WARNING:
+		logger.SetPrefix("WARNING: ")
+		logger.Println(info...)
+	}
+
+}
+
+type Level int
+
+const (
+	ERROR Level = iota
+	INFO
+	DEBUG
+	HANDLER
+	WARNING
+)
