@@ -27,6 +27,11 @@ type DatabaseResponse struct {
 	str string
 }
 
+type Field struct {
+	fieldsName []string
+	fieldsAddr []any
+}
+
 func checkError(err error, msg ...any) bool {
 	if err != nil {
 		clog.Log(clog.ERROR, err, msg)
@@ -93,22 +98,12 @@ func CollectRows[T any](rows pgx.Rows) ([]T, error) {
 func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	var serial T
 
-	s := reflect.ValueOf(&serial).Elem()
-	length := s.NumField()
+	res := getStructFields(&serial)
 
-	var fieldsAddr []any
-	var fieldsName []string
-
-	for i := range length {
-		field := s.Field(i)
-		fieldsName = append(fieldsName, s.Type().Field(i).Name)
-		fieldsAddr = append(fieldsAddr, field.Addr().Interface())
-	}
-
-	items := strings.Join(fieldsName, ", ")
+	items := strings.Join(res.fieldsName, ", ")
 	sql_string := fmt.Sprintf("SELECT %v FROM %v WHERE id=%v", items, table, id)
 
-	err := QueryRow(dl, sql_string, fieldsAddr...)
+	err := QueryRow(dl, sql_string, res.fieldsAddr...)
 
 	if checkError(err) {
 		return serial, err
@@ -119,4 +114,81 @@ func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	debug(serial)
 
 	return serial, nil
+}
+
+func GenericInsert[T any](dl *DatabaseLink, table string) {
+
+}
+
+func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
+	names := getStructNames[T]()
+
+	cols := strings.Join(names, ", ")
+	sql_string := fmt.Sprintf("SELECT %v FROM %v WHERE %v", cols, table, where)
+
+	rows, err := Query(dl, sql_string)
+	if checkError(err) {
+		return nil
+	}
+
+	items, err := CollectRows[T](rows)
+
+	if checkError(err) {
+		return nil
+	}
+
+	return items
+}
+
+// Get addresses of the fields of the struct v
+func getStructFields(v any) Field {
+	structPointer := reflect.ValueOf(v) // struct pointer
+
+	isPointer(structPointer.Kind())
+
+	s := structPointer.Elem() // struct
+
+	isStruct(s.Kind())
+
+	length := s.NumField()
+
+	var res Field
+
+	t := s.Type() // struct type
+
+	for i := range length {
+		res.fieldsName = append(res.fieldsName, t.Field(i).Name)
+		res.fieldsAddr = append(res.fieldsAddr, s.Field(i).Addr().Interface())
+	}
+
+	return res
+}
+
+func getStructNames[T any]() []string {
+
+	t := reflect.TypeFor[T]() // type
+
+	isStruct(t.Kind())
+
+	length := t.NumField()
+
+	var fieldsName []string
+
+	for i := range length {
+		fieldsName = append(fieldsName, t.Field(i).Name)
+	}
+
+	return fieldsName
+}
+
+func isPointer(v reflect.Kind) {
+	if v != reflect.Pointer {
+		panic(fmt.Sprintf("expected pointer to a struct, received %s", v))
+	}
+}
+
+func isStruct(v reflect.Kind) {
+	if v != reflect.Struct {
+		panic(fmt.Sprintf("expected a struct, received %s", v))
+	}
 }

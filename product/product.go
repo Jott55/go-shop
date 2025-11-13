@@ -21,6 +21,8 @@ type Product struct {
 	Description string
 }
 
+const productTable = "products"
+
 func checkError(err error, msg ...any) bool {
 	if err != nil {
 		clog.Log(clog.ERROR, err, msg)
@@ -75,16 +77,7 @@ func Delete(dl *database.DatabaseLink, id int) error {
 
 func Get(dl *database.DatabaseLink, id int) (Product, error) {
 	debug("Getting product name")
-	sql_select := fmt.Sprintf("SELECT name, image_url, price, description FROM products WHERE id=%v", id)
-
-	product := Product{Id: id}
-	err := database.QueryRow(dl, sql_select, &product.Name, &product.Image_url, &product.Price, &product.Description)
-
-	if err != nil {
-		return Product{}, err
-	}
-
-	return product, nil
+	return database.GenericGet[Product](dl, productTable, id)
 }
 
 func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]ProductView, error) {

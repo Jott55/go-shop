@@ -1,9 +1,12 @@
 package user
 
 import (
+	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
 )
+
+const table = "users"
 
 type User struct {
 	Id            int
@@ -44,5 +47,13 @@ func CreateTable(dl *database.DatabaseLink) {
 }
 
 func Get(dl *database.DatabaseLink, id int) (User, error) {
-	return database.GenericGet[User](dl, "users", id)
+	return database.GenericGet[User](dl, table, id)
+}
+
+func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []User {
+	return database.GenericGetWhere[User](dl, table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
+}
+
+func Insert() {
+
 }
