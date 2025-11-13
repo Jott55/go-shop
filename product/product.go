@@ -2,7 +2,6 @@ package product
 
 import (
 	"fmt"
-	"github.com/jackc/pgx/v5"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
 )
@@ -93,7 +92,7 @@ func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]Prod
 
 	clog.Log(clog.DEBUG, "Query was a success")
 
-	products, err := pgx.CollectRows(rows, pgx.RowToStructByName[ProductView])
+	products, err := database.CollectRows[ProductView](rows)
 
 	if err != nil {
 		clog.Log(clog.ERROR, err)
@@ -103,4 +102,21 @@ func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]Prod
 	clog.Log(clog.DEBUG, "Collect rows a success")
 
 	return products, nil
+}
+
+func CreateTable(dl *database.DatabaseLink) {
+	sql_table := `CREATE TABLE products (
+		id bigint GENERATED ALWAYS AS IDENTITY,
+		name VARCHAR(50),
+		image_url VARCHAR(255),
+		price NUMERIC(10,2),
+		description VARCHAR(255)
+	)`
+
+	table, err := database.Exec(dl, sql_table)
+
+	if err != nil {
+		clog.Log(clog.ERROR, err)
+	}
+	clog.Log(clog.DEBUG, table)
 }

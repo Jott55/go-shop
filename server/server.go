@@ -5,6 +5,7 @@ import (
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
 	"jott55/go-shop/product"
+	"jott55/go-shop/user"
 	"net/http"
 	"os"
 
@@ -21,6 +22,10 @@ import (
 
 type ProductRequest struct {
 	Product *product.Product
+}
+
+type UserRequest struct {
+	User *user.User
 }
 
 var shopDB *database.DatabaseLink
@@ -246,6 +251,10 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(img)
 }
 
+func getUser(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func admin(w http.ResponseWriter, r *http.Request) {
 	file, err := os.ReadFile("admin.html")
 
@@ -254,6 +263,13 @@ func admin(w http.ResponseWriter, r *http.Request) {
 	}
 	clog.Log(clog.DEBUG, "admin page")
 	w.Write(file)
+}
+
+func createProducts(w http.ResponseWriter, r *http.Request) {
+	product.CreateTable(shopDB)
+}
+func createUsers(w http.ResponseWriter, r *http.Request) {
+	user.CreateTable(shopDB)
 }
 
 func doRouterShit() {
@@ -291,6 +307,12 @@ func doRouterShit() {
 	router.Get("/product/{id}", getProduct)
 
 	router.Get("/product/{id}/delete", deleteProduct)
+
+	router.Get("/user/{id}", getUser)
+
+	router.Get("/create/products", createProducts)
+
+	router.Get("/create/users", createUsers)
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {

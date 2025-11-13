@@ -3,9 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type DatabaseInfo struct {
@@ -19,6 +17,10 @@ type DatabaseInfo struct {
 type DatabaseLink struct {
 	info *DatabaseInfo
 	con  *pgx.Conn
+}
+
+type DatabaseResponse struct {
+	str string
 }
 
 func Create() *DatabaseLink {
@@ -47,8 +49,9 @@ func Init(dl *DatabaseLink) error {
 	return nil
 }
 
-func Exec(dl *DatabaseLink, sql string) (pgconn.CommandTag, error) {
-	return dl.con.Exec(context.Background(), sql)
+func Exec(dl *DatabaseLink, sql string, args ...any) (DatabaseResponse, error) {
+	comm, err := dl.con.Exec(context.Background(), sql, args...)
+	return newDatabaseResponse(comm.String()), err
 }
 
 func Close(dl *DatabaseLink) error {
@@ -63,6 +66,10 @@ func Query(dl *DatabaseLink, sql string) (pgx.Rows, error) {
 	return dl.con.Query(context.Background(), sql)
 }
 
-func IsError(err error) {
+func newDatabaseResponse(str string) DatabaseResponse {
+	return DatabaseResponse{str}
+}
 
+func CollectRows[T any](rows pgx.Rows) ([]T, error) {
+	return pgx.CollectRows(rows, pgx.RowToStructByName[T])
 }
