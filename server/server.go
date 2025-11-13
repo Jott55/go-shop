@@ -71,7 +71,9 @@ func getDatabaseInfoFromUser() database.DatabaseInfo {
 
 func createNewConfigFile(name string) {
 	file, err := os.Create(name)
-	checkError(err)
+	if checkError(err) {
+		return
+	}
 
 	db := getDatabaseInfoFromUser()
 
@@ -92,10 +94,15 @@ func configure(dl *database.DatabaseLink) {
 		createNewConfigFile(config_filename)
 	}
 	dat, err := getConfigFileData()
-	checkError(err)
+
+	if checkError(err) {
+		return
+	}
 
 	if len(dat) < 64 {
 		createNewConfigFile(config_filename)
+		configure(dl)
+		return
 	}
 
 	var db database.DatabaseInfo
