@@ -88,6 +88,10 @@ func createNewConfigFile(name string) {
 	file.Close()
 }
 
+func getConfigFileData() ([]byte, error) {
+	return os.ReadFile("config.json")
+}
+
 func configure(dl *database.DatabaseLink) {
 	config_filename := "config.json"
 	if checkFileExist(config_filename) {
@@ -118,8 +122,8 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 func admin(w http.ResponseWriter, r *http.Request) {
 	file, err := os.ReadFile("admin.html")
 
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+	if checkError(err) {
+		return
 	}
 	clog.Log(clog.DEBUG, "admin page")
 	w.Write(file)
@@ -348,10 +352,6 @@ func startDatabase(dl *database.DatabaseLink) {
 	} else {
 		fmt.Println("database Initialized")
 	}
-}
-
-func getConfigFileData() ([]byte, error) {
-	return os.ReadFile("config.json")
 }
 
 func Run() {
