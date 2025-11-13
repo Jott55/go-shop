@@ -30,76 +30,26 @@ type UserRequest struct {
 
 var shopDB *database.DatabaseLink
 
-func Run() {
-
-	shopDB = database.Create()
-
-	configure(shopDB)
-
-	startDatabase(shopDB)
-
-	doRouterShit()
-
-	database.Close(shopDB)
+func noDb(dl *database.DatabaseLink) bool {
+	if dl == nil {
+		clog.Log(clog.ERROR, "no db connection, returning")
+		return true
+	}
+	return false
 }
 
-func startDatabase(dl *database.DatabaseLink) {
+func checkFileExist(name string) bool {
+	file, err := os.Open(name)
+	file.Close()
+	return os.IsNotExist(err)
+}
 
-	err := database.Init(dl)
-
+func checkError(err error, msg ...any) bool {
 	if err != nil {
-		var str string
-
-		clog.Log(clog.ERROR, "Database ERROR")
-		fmt.Println("want to continue anyway? (y/n) change config (c)? rerun? (r)")
-		fmt.Scanf("%s", &str)
-		switch strings.ToLower(str) {
-		case "n":
-			os.Exit(1)
-		case "c":
-			createConfigFile("config.json")
-			configure(dl)
-			startDatabase(dl)
-			return
-		case "r":
-			startDatabase(dl)
-			return
-		case "y":
-			doRouterShit()
-		default:
-			startDatabase(dl)
-		}
-	} else {
-		fmt.Println("database Initialized")
+		clog.Log(clog.ERROR, err, msg)
+		return true
 	}
-}
-
-func checkError(err error) {
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-	}
-}
-
-func configure(dl *database.DatabaseLink) {
-	config_filename := "config.json"
-	if checkFileExist(config_filename) {
-		createConfigFile(config_filename)
-	}
-	dat, err := getConfigFileData()
-	checkError(err)
-
-	if len(dat) < 64 {
-		createConfigFile(config_filename)
-	}
-
-	var db database.DatabaseInfo
-	json.Unmarshal(dat, &db)
-
-	database.Configure(dl, db)
-}
-
-func getConfigFileData() ([]byte, error) {
-	return os.ReadFile("config.json")
+	return false
 }
 
 func getDatabaseInfoFromUser() database.DatabaseInfo {
@@ -119,13 +69,7 @@ func getDatabaseInfoFromUser() database.DatabaseInfo {
 	return db
 }
 
-func checkFileExist(name string) bool {
-	file, err := os.Open(name)
-	file.Close()
-	return os.IsNotExist(err)
-}
-
-func createConfigFile(name string) {
+func createNewConfigFile(name string) {
 	file, err := os.Create(name)
 	checkError(err)
 
@@ -133,14 +77,108 @@ func createConfigFile(name string) {
 
 	data, err := json.Marshal(db)
 
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+	if checkError(err) {
 		return
 	}
 
 	file.Write(data)
 
 	file.Close()
+}
+
+func configure(dl *database.DatabaseLink) {
+	config_filename := "config.json"
+	if checkFileExist(config_filename) {
+		createNewConfigFile(config_filename)
+	}
+	dat, err := getConfigFileData()
+	checkError(err)
+
+	if len(dat) < 64 {
+		createNewConfigFile(config_filename)
+	}
+
+	var db database.DatabaseInfo
+	json.Unmarshal(dat, &db)
+
+	database.Configure(dl, db)
+}
+
+func mainPage(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello... what are you doing here???? anyway check my discord: @wasenokkami"))
+}
+
+func admin(w http.ResponseWriter, r *http.Request) {
+	file, err := os.ReadFile("admin.html")
+
+	if err != nil {
+		clog.Log(clog.ERROR, err)
+	}
+	clog.Log(clog.DEBUG, "admin page")
+	w.Write(file)
+}
+
+func generateMarkdown(router *chi.Mux) {
+	data := docgen.MarkdownRoutesDoc(router, docgen.MarkdownOpts{})
+
+	err := os.Remove("routes.md")
+
+	if err != nil && os.IsExist(err) {
+		clog.Log(clog.ERROR, err)
+		return
+	}
+
+	file, err := os.Create("route.md")
+
+	if checkError(err) {
+		return
+	}
+
+	_, err = file.Write([]byte(data))
+
+	if checkError(err) {
+		return
+	}
+
+	defer file.Close()
+}
+
+func getImage(w http.ResponseWriter, r *http.Request) {
+	product_name_param := chi.URLParam(r, "name")
+	img, err := os.ReadFile(fmt.Sprintf("images/%s", product_name_param))
+
+	if checkError(err) {
+		return
+	}
+
+	w.Write(img)
+}
+
+func createProducts(w http.ResponseWriter, r *http.Request) {
+	product.CreateTable(shopDB)
+}
+
+func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
+
+	if noDb(shopDB) {
+		return
+	}
+
+	pd, err := product.GetAllSimplyfied(shopDB, 0, 100000)
+
+	if checkError(err) {
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	content, err := json.Marshal(pd)
+
+	if checkError(err) {
+		return
+	}
+
+	clog.Log(clog.DEBUG, "Json was created ")
+	w.Write(content)
 }
 
 func getProduct(w http.ResponseWriter, r *http.Request) {
@@ -152,8 +190,11 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 		clog.Log(clog.ERROR, err, "product of id: ", id)
 	}
 
-	if shopDB == nil {
-		noDb()
+	if checkError(err, "product of id: ", id) {
+		return
+	}
+
+	if noDb(shopDB) {
 		return
 	}
 
@@ -177,40 +218,17 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
-func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
-
-	if shopDB == nil {
-		noDb()
-		return
-	}
-
-	pd, err := product.GetAllSimplyfied(shopDB, 0, 100000)
-
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	content, err := json.Marshal(pd)
-
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-	}
-	clog.Log(clog.DEBUG, "Json was created ")
-	w.Write(content)
-}
-
 func insertProduct(w http.ResponseWriter, r *http.Request) {
 
 	var pr ProductRequest
 
 	err := json.NewDecoder(r.Body).Decode(&pr)
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+
+	if checkError(err) {
+		return
 	}
 
-	if shopDB == nil {
-		noDb()
+	if noDb(shopDB) {
 		return
 	}
 
@@ -225,51 +243,23 @@ func insertProduct(w http.ResponseWriter, r *http.Request) {
 func deleteProduct(w http.ResponseWriter, r *http.Request) {
 	product_id_param := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(product_id_param)
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+	if checkError(err) {
+		return
 	}
 
-	if shopDB == nil {
-		noDb()
+	if noDb(shopDB) {
 		return
 	}
 
 	product.Delete(shopDB, id)
 }
 
-func mainPage(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello... what are you doing here???? anyway check my discord: @wasenokkami"))
-}
-
-func getImage(w http.ResponseWriter, r *http.Request) {
-	product_name_param := chi.URLParam(r, "name")
-	img, err := os.ReadFile(fmt.Sprintf("images/%s", product_name_param))
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-	}
-
-	w.Write(img)
+func createUsers(w http.ResponseWriter, r *http.Request) {
+	user.CreateTable(shopDB)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
 
-}
-
-func admin(w http.ResponseWriter, r *http.Request) {
-	file, err := os.ReadFile("admin.html")
-
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-	}
-	clog.Log(clog.DEBUG, "admin page")
-	w.Write(file)
-}
-
-func createProducts(w http.ResponseWriter, r *http.Request) {
-	product.CreateTable(shopDB)
-}
-func createUsers(w http.ResponseWriter, r *http.Request) {
-	user.CreateTable(shopDB)
 }
 
 func doRouterShit() {
@@ -278,7 +268,7 @@ func doRouterShit() {
 
 	router := chi.NewRouter()
 
-	router.Use(middleware.Logger)
+	router.Use(middleware.Logger) // router logger
 	router.Use(cors.Handler(
 		cors.Options{
 			AllowedOrigins:   []string{"https://*", "http://*"},
@@ -292,27 +282,27 @@ func doRouterShit() {
 
 	router.Get("/", mainPage)
 
+	router.Get("/admin", admin) // admin page
+
 	router.Get("/generate", func(w http.ResponseWriter, r *http.Request) {
-		generateMarkdown(router)
+		generateMarkdown(router) // chi middleware for creating api doc
 	})
-
-	router.Get("/admin", admin)
-
-	router.Get("/product", getProductsSimplyfied)
-
-	router.Post("/post/product", insertProduct)
 
 	router.Get("/images/{name}", getImage)
 
+	router.Get("/create/products", createProducts)
+
+	router.Get("/product", getProductsSimplyfied)
+
 	router.Get("/product/{id}", getProduct)
+
+	router.Post("/post/product", insertProduct)
 
 	router.Get("/product/{id}/delete", deleteProduct)
 
-	router.Get("/user/{id}", getUser)
-
-	router.Get("/create/products", createProducts)
-
 	router.Get("/create/users", createUsers)
+
+	router.Get("/user/{id}", getUser)
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
@@ -322,30 +312,50 @@ func doRouterShit() {
 
 }
 
-func generateMarkdown(router *chi.Mux) {
-	data := docgen.MarkdownRoutesDoc(router, docgen.MarkdownOpts{})
+func startDatabase(dl *database.DatabaseLink) {
 
-	if err := os.Remove("routes.md"); err != nil && os.IsExist(err) {
-		clog.Log(clog.ERROR, err)
-		return
-	}
-
-	file, err := os.Create("route.md")
+	err := database.Init(dl) // fill database link
 
 	if err != nil {
-		clog.Log(clog.ERROR, err)
-		return
-	}
+		var str string
 
-	_, err = file.Write([]byte(data))
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-		return
+		clog.Log(clog.ERROR, "Database ERROR")
+		fmt.Println("want to continue anyway? (y/n) change config (c)? rerun? (r)")
+		fmt.Scanf("%s", &str)
+		switch strings.ToLower(str) {
+		case "n": // exit program
+			os.Exit(1)
+		case "c": // create config and retry
+			createNewConfigFile("config.json")
+			configure(dl) // apply config
+			startDatabase(dl)
+			return
+		case "r": //  retry
+			startDatabase(dl)
+			return
+		case "y": // exit function
+			return
+		default: // retry
+			startDatabase(dl)
+		}
+	} else {
+		fmt.Println("database Initialized")
 	}
-
-	defer file.Close()
 }
 
-func noDb() {
-	clog.Log(clog.ERROR, "no db connection, returning")
+func getConfigFileData() ([]byte, error) {
+	return os.ReadFile("config.json")
+}
+
+func Run() {
+
+	shopDB = database.Create()
+
+	configure(shopDB)
+
+	startDatabase(shopDB)
+
+	doRouterShit()
+
+	database.Close(shopDB)
 }
