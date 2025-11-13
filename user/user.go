@@ -13,6 +13,18 @@ type User struct {
 	Photo_url     string
 }
 
+func checkError(err error, msg ...any) bool {
+	if err != nil {
+		clog.Log(clog.ERROR, msg...)
+		return true
+	}
+	return false
+}
+
+func debug(msg ...any) {
+	clog.Log(clog.DEBUG, msg...)
+}
+
 func CreateTable(dl *database.DatabaseLink) {
 	sql_table := `CREATE TABLE users (
 		id bigint GENERATED ALWAYS AS IDENTITY,
@@ -24,8 +36,13 @@ func CreateTable(dl *database.DatabaseLink) {
 
 	table, err := database.Exec(dl, sql_table)
 
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+	if checkError(err) {
+		return
 	}
-	clog.Log(clog.DEBUG, table, sql_table)
+
+	debug(table, sql_table)
+}
+
+func Get(dl *database.DatabaseLink, id int) (User, error) {
+	return database.GenericGet[User](dl, "users", id)
 }

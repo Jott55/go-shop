@@ -52,6 +52,10 @@ func checkError(err error, msg ...any) bool {
 	return false
 }
 
+func debug(msg ...any) {
+	clog.Log(clog.DEBUG, msg...)
+}
+
 func getDatabaseInfoFromUser() database.DatabaseInfo {
 	var db database.DatabaseInfo
 
@@ -192,6 +196,10 @@ func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
+func getId(r *http.Request) (int, error) {
+	return strconv.Atoi(chi.URLParam(r, "id"))
+}
+
 func getProduct(w http.ResponseWriter, r *http.Request) {
 	product_id_param := chi.URLParam(r, "id")
 
@@ -221,10 +229,10 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	content, err := json.Marshal(product)
 
-	if err != nil {
-		clog.Log(clog.ERROR, err)
+	if checkError(err) {
 		return
 	}
+
 	clog.Log(clog.DEBUG, "product json")
 	w.Write(content)
 }
@@ -269,8 +277,31 @@ func createUsers(w http.ResponseWriter, r *http.Request) {
 	user.CreateTable(shopDB)
 }
 
+func sendJson(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	content, err := json.Marshal(v)
+	if checkError(err) {
+		return
+	}
+
+	w.Write(content)
+}
+
 func getUser(w http.ResponseWriter, r *http.Request) {
 
+	id, err := getId(r)
+
+	if checkError(err) {
+		return
+	}
+
+	user, err := user.Get(shopDB, id)
+
+	if checkError(err) {
+		return
+	}
+
+	sendJson(w, user)
 }
 
 func doRouterShit() {
