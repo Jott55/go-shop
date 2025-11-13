@@ -54,6 +54,9 @@ func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []User {
 	return database.GenericGetWhere[User](dl, table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
-func Insert() {
+func Insert(dl *database.DatabaseLink, user *User) database.DatabaseResponse {
+	u := User{user.Id, user.Name, user.Email, user.Password_hash, user.Photo_url}
 
+	debug(u, "USer")
+	return database.GenericInsert(dl, table, u)
 }

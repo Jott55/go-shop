@@ -304,6 +304,32 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, user)
 }
 
+func getUsers(w http.ResponseWriter, r *http.Request) {
+	users := user.GetWhere(shopDB, 0, 10)
+
+	sendJson(w, users)
+}
+
+func insertUser(w http.ResponseWriter, r *http.Request) {
+	var us UserRequest
+
+	err := json.NewDecoder(r.Body).Decode(&us)
+
+	if checkError(err) {
+		return
+	}
+
+	if noDb(shopDB) {
+		return
+	}
+
+	fmt.Println(us)
+
+	debug("inserting")
+
+	user.Insert(shopDB, us.User)
+}
+
 func doRouterShit() {
 
 	clog.Log(clog.INFO, "initializing router")
@@ -342,9 +368,13 @@ func doRouterShit() {
 
 	router.Get("/product/{id}/delete", deleteProduct)
 
-	router.Get("/create/users", createUsers)
+	router.Get("/user/create", createUsers)
 
 	router.Get("/user/{id}", getUser)
+
+	router.Get("/user", getUsers)
+
+	router.Post("/user/insert", insertUser)
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {

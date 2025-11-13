@@ -27,14 +27,19 @@ type DatabaseResponse struct {
 	str string
 }
 
-type Field struct {
-	fieldsName []string
-	fieldsAddr []any
+type FieldAddress struct {
+	fieldName    []string
+	fieldAddress []any
+}
+
+type FieldValues struct {
+	fieldName  []string
+	fieldValue []any
 }
 
 func checkError(err error, msg ...any) bool {
 	if err != nil {
-		clog.Log(clog.ERROR, err, msg)
+		clog.Logger(clog.ERROR, 2, err, msg)
 		return true
 	}
 	return false
@@ -98,12 +103,12 @@ func CollectRows[T any](rows pgx.Rows) ([]T, error) {
 func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	var serial T
 
-	res := getStructFields(&serial)
+	fa := getStructFieldsAddress(&serial)
 
-	items := strings.Join(res.fieldsName, ", ")
-	sql_string := fmt.Sprintf("SELECT %v FROM %v WHERE id=%v", items, table, id)
+	items := strings.Join(fa.fieldName, ", ")
+	sql_string := fmt.Sprintf(`SELECT %v FROM %v WHERE id=%v`, items, table, id)
 
-	err := QueryRow(dl, sql_string, res.fieldsAddr...)
+	err := QueryRow(dl, sql_string, fa.fieldAddress...)
 
 	if checkError(err) {
 		return serial, err
@@ -116,15 +121,38 @@ func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	return serial, nil
 }
 
-func GenericInsert[T any](dl *DatabaseLink, table string) {
+func GenericInsert(dl *DatabaseLink, table string, t any) DatabaseResponse {
 
+	debug(t)
+
+	var a = t
+
+	fv := getStructValues(&a)
+
+	cols := strings.Join(fv.fieldName, ", ")
+	var values []string
+	for v := range fv.fieldValue {
+		values = append(values, fmt.Sprintf("%v", v))
+	}
+
+	valuesStr := strings.Join(values, ", ")
+
+	sql_insert := fmt.Sprintf(`INSERT INTO %v (%v) VALUES (%v)`, table, cols, valuesStr)
+
+	debug(sql_insert)
+
+	tag, err := Exec(dl, sql_insert)
+
+	checkError(err)
+
+	return tag
 }
 
 func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 	names := getStructNames[T]()
 
 	cols := strings.Join(names, ", ")
-	sql_string := fmt.Sprintf("SELECT %v FROM %v WHERE %v", cols, table, where)
+	sql_string := fmt.Sprintf(`SELECT %v FROM %v WHERE %v`, cols, table, where)
 
 	rows, err := Query(dl, sql_string)
 	if checkError(err) {
@@ -140,8 +168,8 @@ func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 	return items
 }
 
-// Get addresses of the fields of the struct v
-func getStructFields(v any) Field {
+// Get address of the fields of the struct v
+func getStructFieldsAddress(v any) FieldAddress {
 	structPointer := reflect.ValueOf(v) // struct pointer
 
 	isPointer(structPointer.Kind())
@@ -152,13 +180,37 @@ func getStructFields(v any) Field {
 
 	length := s.NumField()
 
-	var res Field
+	var res FieldAddress
 
 	t := s.Type() // struct type
 
 	for i := range length {
-		res.fieldsName = append(res.fieldsName, t.Field(i).Name)
-		res.fieldsAddr = append(res.fieldsAddr, s.Field(i).Addr().Interface())
+		res.fieldName = append(res.fieldName, t.Field(i).Name)
+		res.fieldAddress = append(res.fieldAddress, s.Field(i).Addr().Interface())
+	}
+
+	return res
+}
+
+// Get the value of the fields of the struct v
+func getStructValues(v any) FieldValues {
+	structPointer := reflect.ValueOf(v) // struct pointer
+
+	isPointer(structPointer.Kind())
+
+	s := structPointer.Elem() // struct
+
+	isStruct(s.Kind())
+
+	length := s.NumField()
+
+	var res FieldValues
+
+	t := s.Type() // struct type
+
+	for i := range length {
+		res.fieldName = append(res.fieldName, t.Field(i).Name)
+		res.fieldValue = append(res.fieldValue, s.Field(i).Interface())
 	}
 
 	return res

@@ -33,6 +33,7 @@ func Logger(level Level, skip int, info ...any) {
 		logger.SetPrefix("INFO: ")
 		logger.Println(info...)
 	case DEBUG:
+		logger.SetFlags(0)
 		logger.SetPrefix("DEBUG: ")
 		logger.Println(info...)
 	case WARNING:
