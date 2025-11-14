@@ -241,3 +241,53 @@ func isStruct(v reflect.Kind) {
 		panic(fmt.Sprintf("expected a struct, received %s", v))
 	}
 }
+
+func DeleteById(dl *DatabaseLink, table string, id int) error {
+	sql_delete := fmt.Sprintf("DELETE FROM %v WHERE id=%v", table, id)
+
+	_, err := Exec(dl, sql_delete)
+
+	if checkError(err) {
+		return err
+	}
+	return nil
+}
+
+func CreateTable(dl *DatabaseLink, table string, fields string) {
+	sql_table := fmt.Sprintf(`CREATE TABLE %v (%v)`, table, fields)
+
+	dr, err := Exec(dl, sql_table)
+
+	if checkError(err) {
+		return
+	}
+
+	debug(dr.str, sql_table)
+}
+
+func DropTable(dl *DatabaseLink, table string) {
+	sql_drop := fmt.Sprintf(`DROP TABLE %v`, table)
+
+	dr, err := Exec(dl, sql_drop)
+
+	if checkError(err) {
+		return
+	}
+
+	debug(dr.str)
+
+}
+
+func DeleteFromTableById(dl *DatabaseLink, table string, id int) {
+	sql_delete := fmt.Sprintf(`DELETE FROM %s WHERE id=%d`, table, id)
+
+	_, err := Exec(dl, sql_delete)
+	checkError(err)
+}
+
+func DeleteFromTableWhere(dl *DatabaseLink, table string, condition string) {
+	sql_delete := fmt.Sprintf(`DELETE FROM %s WHERE %s`, table, condition)
+
+	_, err := Exec(dl, sql_delete)
+	checkError(err)
+}
