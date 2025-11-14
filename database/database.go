@@ -121,18 +121,15 @@ func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	return serial, nil
 }
 
+// t = pointer to a struct
 func GenericInsert(dl *DatabaseLink, table string, t any) DatabaseResponse {
-
-	debug(t)
-
-	var a = t
-
-	fv := getStructValues(&a)
+	fv := getStructValues(t)
 
 	cols := strings.Join(fv.fieldName, ", ")
 	var values []string
-	for v := range fv.fieldValue {
-		values = append(values, fmt.Sprintf("%v", v))
+
+	for _, val := range fv.fieldValue {
+		values = append(values, fmt.Sprintf(`'%v'`, val))
 	}
 
 	valuesStr := strings.Join(values, ", ")
@@ -192,7 +189,7 @@ func getStructFieldsAddress(v any) FieldAddress {
 	return res
 }
 
-// Get the value of the fields of the struct v
+// Get the value of the fields of the struct *v
 func getStructValues(v any) FieldValues {
 	structPointer := reflect.ValueOf(v) // struct pointer
 
@@ -209,8 +206,8 @@ func getStructValues(v any) FieldValues {
 	t := s.Type() // struct type
 
 	for i := range length {
-		res.fieldName = append(res.fieldName, t.Field(i).Name)
-		res.fieldValue = append(res.fieldValue, s.Field(i).Interface())
+		res.fieldName = append(res.fieldName, t.Field(i).Name)          // field name
+		res.fieldValue = append(res.fieldValue, s.Field(i).Interface()) // field value
 	}
 
 	return res

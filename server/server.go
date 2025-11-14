@@ -25,7 +25,7 @@ type ProductRequest struct {
 }
 
 type UserRequest struct {
-	User *user.User
+	User *user.UserInsert
 }
 
 var shopDB *database.DatabaseLink

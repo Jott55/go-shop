@@ -16,6 +16,13 @@ type User struct {
 	Photo_url     string
 }
 
+type UserInsert struct {
+	Name          string
+	Email         string
+	Password_hash string
+	Photo_url     string
+}
+
 func checkError(err error, msg ...any) bool {
 	if err != nil {
 		clog.Log(clog.ERROR, msg...)
@@ -54,9 +61,6 @@ func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []User {
 	return database.GenericGetWhere[User](dl, table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
-func Insert(dl *database.DatabaseLink, user *User) database.DatabaseResponse {
-	u := User{user.Id, user.Name, user.Email, user.Password_hash, user.Photo_url}
-
-	debug(u, "USer")
-	return database.GenericInsert(dl, table, u)
+func Insert(dl *database.DatabaseLink, user *UserInsert) database.DatabaseResponse {
+	return database.GenericInsert(dl, table, user)
 }
