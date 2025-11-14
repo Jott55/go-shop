@@ -25,7 +25,7 @@ type UserInsert struct {
 
 func checkError(err error, msg ...any) bool {
 	if err != nil {
-		clog.Log(clog.ERROR, msg...)
+		clog.Logger(clog.ERROR, 2, err, msg)
 		return true
 	}
 	return false

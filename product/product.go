@@ -25,7 +25,7 @@ const productTable = "products"
 
 func checkError(err error, msg ...any) bool {
 	if err != nil {
-		clog.Log(clog.ERROR, err, msg)
+		clog.Logger(clog.ERROR, 2, err, msg)
 		return true
 	}
 	return false

@@ -46,7 +46,7 @@ func checkFileExist(name string) bool {
 
 func checkError(err error, msg ...any) bool {
 	if err != nil {
-		clog.Log(clog.ERROR, err, msg)
+		clog.Logger(clog.ERROR, 2, err, msg)
 		return true
 	}
 	return false
@@ -322,10 +322,6 @@ func insertUser(w http.ResponseWriter, r *http.Request) {
 	if noDb(shopDB) {
 		return
 	}
-
-	fmt.Println(us)
-
-	debug("inserting")
 
 	user.Insert(shopDB, us.User)
 }
