@@ -326,6 +326,10 @@ func insertUser(w http.ResponseWriter, r *http.Request) {
 	user.Insert(shopDB, us.User)
 }
 
+func dropUsers(w http.ResponseWriter, r *http.Request) {
+	user.Drop(shopDB)
+}
+
 func doRouterShit() {
 
 	clog.Log(clog.INFO, "initializing router")
@@ -365,6 +369,8 @@ func doRouterShit() {
 	router.Get("/product/{id}/delete", deleteProduct)
 
 	router.Get("/user/create", createUsers)
+
+	router.Get("/user/drop", dropUsers)
 
 	router.Get("/user/{id}", getUser)
 

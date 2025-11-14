@@ -36,21 +36,19 @@ func debug(msg ...any) {
 }
 
 func CreateTable(dl *database.DatabaseLink) {
-	sql_table := `CREATE TABLE users (
+	field := `
 		id bigint GENERATED ALWAYS AS IDENTITY,
 		name VARCHAR(50),
 		email VARCHAR(50),
 		password_hash VARCHAR(64),
 		photo_url VARCHAR(255)
-	)`
+	`
 
-	table, err := database.Exec(dl, sql_table)
+	database.CreateTable(dl, table, field)
+}
 
-	if checkError(err) {
-		return
-	}
-
-	debug(table, sql_table)
+func Drop(dl *database.DatabaseLink) {
+	database.DropTable(dl, table)
 }
 
 func Get(dl *database.DatabaseLink, id int) (User, error) {
@@ -63,4 +61,8 @@ func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []User {
 
 func Insert(dl *database.DatabaseLink, user *UserInsert) database.DatabaseResponse {
 	return database.GenericInsert(dl, table, user)
+}
+
+func Delete(dl *database.DatabaseLink, id int) error {
+	return database.DeleteById(dl, table, id)
 }
