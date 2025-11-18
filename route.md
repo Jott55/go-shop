@@ -25,6 +25,16 @@
 
 </details>
 <details>
+<summary>`/create/products`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/create/products**
+	- _GET_
+		- [createProducts]()
+
+</details>
+<details>
 <summary>`/generate`</summary>
 
 - [Logger]()
@@ -84,5 +94,65 @@
 		- [deleteProduct]()
 
 </details>
+<details>
+<summary>`/user`</summary>
 
-Total # of routes: 8
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user**
+	- _GET_
+		- [getUsers]()
+
+</details>
+<details>
+<summary>`/user/create`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user/create**
+	- _GET_
+		- [createUsers]()
+
+</details>
+<details>
+<summary>`/user/drop`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user/drop**
+	- _GET_
+		- [dropUsers]()
+
+</details>
+<details>
+<summary>`/user/id/delete`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user/id/delete**
+	- _POST_
+		- [deleteUser]()
+
+</details>
+<details>
+<summary>`/user/insert`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user/insert**
+	- _POST_
+		- [insertUser]()
+
+</details>
+<details>
+<summary>`/user/{id}`</summary>
+
+- [Logger]()
+- [o-chi/cors.(*Cors).Handler-fm]()
+- **/user/{id}**
+	- _GET_
+		- [getUser]()
+
+</details>
+
+Total # of routes: 15

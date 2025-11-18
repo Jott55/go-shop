@@ -6,7 +6,7 @@ import (
 	"jott55/go-shop/database"
 )
 
-const table = "users"
+const Table = "users"
 
 type User struct {
 	Id            int
@@ -37,32 +37,32 @@ func debug(msg ...any) {
 
 func CreateTable(dl *database.DatabaseLink) {
 	field := `
-		id bigint GENERATED ALWAYS AS IDENTITY,
+		id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 		name VARCHAR(50),
 		email VARCHAR(50),
 		password_hash VARCHAR(64),
 		photo_url VARCHAR(255)
 	`
 
-	database.CreateTable(dl, table, field)
+	database.CreateTable(dl, Table, field)
 }
 
 func Drop(dl *database.DatabaseLink) {
-	database.DropTable(dl, table)
+	database.DropTable(dl, Table)
 }
 
 func Get(dl *database.DatabaseLink, id int) (User, error) {
-	return database.GenericGet[User](dl, table, id)
+	return database.GenericGet[User](dl, Table, id)
 }
 
 func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []User {
-	return database.GenericGetWhere[User](dl, table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
+	return database.GenericGetWhere[User](dl, Table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
 func Insert(dl *database.DatabaseLink, user *UserInsert) database.DatabaseResponse {
-	return database.GenericInsert(dl, table, user)
+	return database.GenericInsert(dl, Table, user)
 }
 
 func Delete(dl *database.DatabaseLink, id int) error {
-	return database.DeleteById(dl, table, id)
+	return database.DeleteById(dl, Table, id)
 }

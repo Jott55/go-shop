@@ -265,8 +265,21 @@ func CreateTable(dl *DatabaseLink, table string, fields string) {
 	debug(dr.str, sql_table)
 }
 
+func CreateIndex(dl *DatabaseLink, table string, columns []string) {
+	cols := strings.Join(columns, ", ")
+	sql_index := fmt.Sprintf(`CREATE INDEX %s_index ON %s (%v)`, table, table, cols)
+
+	dr, err := Exec(dl, sql_index)
+
+	if checkError(err) {
+		return
+	}
+
+	debug(dr.str, sql_index)
+}
+
 func DropTable(dl *DatabaseLink, table string) {
-	sql_drop := fmt.Sprintf(`DROP TABLE %v`, table)
+	sql_drop := fmt.Sprintf(`DROP TABLE %s`, table)
 
 	dr, err := Exec(dl, sql_drop)
 

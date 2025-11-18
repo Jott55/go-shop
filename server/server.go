@@ -6,6 +6,8 @@ import (
 	"jott55/go-shop/database"
 	"jott55/go-shop/product"
 	"jott55/go-shop/user"
+	"jott55/go-shop/user/cart"
+	"jott55/go-shop/user/cart/item"
 	"net/http"
 	"os"
 
@@ -330,6 +332,15 @@ func dropUsers(w http.ResponseWriter, r *http.Request) {
 	user.Drop(shopDB)
 }
 
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	id, err := getId(r)
+	checkError(err)
+	debug("deleting user: ", id)
+
+	user.Delete(shopDB, id)
+
+}
+
 func doRouterShit() {
 
 	clog.Log(clog.INFO, "initializing router")
@@ -354,6 +365,8 @@ func doRouterShit() {
 
 	router.Get("/generate", func(w http.ResponseWriter, r *http.Request) {
 		generateMarkdown(router) // chi middleware for creating api doc
+		data, _ := os.ReadFile("route.md")
+		w.Write(data)
 	})
 
 	router.Get("/images/{name}", getImage)
@@ -377,6 +390,30 @@ func doRouterShit() {
 	router.Get("/user", getUsers)
 
 	router.Post("/user/insert", insertUser)
+
+	router.Get("/user/{id}/delete", deleteUser)
+
+	router.Get("/cart/create", func(w http.ResponseWriter, r *http.Request) {
+		cart.CreateTable(shopDB)
+	})
+
+	router.Get("/cart/item/create", func(w http.ResponseWriter, r *http.Request) {
+		item.CreateTable(shopDB)
+	})
+
+	router.Get("/createAllTables", func(w http.ResponseWriter, r *http.Request) {
+		user.CreateTable(shopDB)
+		product.CreateTable(shopDB)
+		cart.CreateTable(shopDB)
+		item.CreateTable(shopDB)
+	})
+
+	router.Get("/deleteAllTables", func(w http.ResponseWriter, r *http.Request) {
+		item.Drop(shopDB)
+		cart.Drop(shopDB)
+		product.Drop(shopDB)
+		user.Drop(shopDB)
+	})
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
