@@ -4,22 +4,8 @@ import (
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
+	"jott55/go-shop/types"
 )
-
-type ProductView struct {
-	Id        int
-	Name      string
-	Image_url string
-	Price     int
-}
-
-type Product struct {
-	Id          int
-	Name        string
-	Image_url   string
-	Price       int
-	Description string
-}
 
 const Table = "products"
 
@@ -35,7 +21,7 @@ func debug(msg ...any) {
 	clog.Log(clog.DEBUG, msg...)
 }
 
-func Insert(dl *database.DatabaseLink, product *Product) error {
+func Insert(dl *database.DatabaseLink, product *types.Product) error {
 
 	debug("Inserting to db")
 	debug("Name: ", product.Name)
@@ -69,12 +55,12 @@ func Delete(dl *database.DatabaseLink, id int) error {
 	return nil
 }
 
-func Get(dl *database.DatabaseLink, id int) (Product, error) {
+func Get(dl *database.DatabaseLink, id int) (types.Product, error) {
 	debug("Getting product name")
-	return database.GenericGet[Product](dl, Table, id)
+	return database.GenericGet[types.Product](dl, Table, id)
 }
 
-func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]ProductView, error) {
+func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]types.ProductView, error) {
 	debug("Getting products in range of: ", id_min, " ", id_max)
 
 	sql_select := fmt.Sprintf("SELECT id, name, image_url, price FROM products WHERE id BETWEEN %v AND %v", id_min, id_max)
@@ -87,7 +73,7 @@ func GetAllSimplyfied(dl *database.DatabaseLink, id_min int, id_max int) ([]Prod
 
 	debug("Query was a success")
 
-	products, err := database.CollectRows[ProductView](rows)
+	products, err := database.CollectRows[types.ProductView](rows)
 
 	if checkError(err) {
 		return nil, err
@@ -112,4 +98,16 @@ func CreateTable(dl *database.DatabaseLink) {
 }
 func Drop(dl *database.DatabaseLink) {
 	database.DropTable(dl, Table)
+}
+
+func GetProductsFromItems(dl *database.DatabaseLink, items []types.ItemNoIdCartId) []types.ProductItem {
+
+	var productItems []types.ProductItem
+
+	for _, it := range items {
+		pl, _ := database.GenericGet[types.ProductLess](dl, Table, it.Product_id)
+		productItems = append(productItems, types.ProductItem{Id: it.Product_id, Name: pl.Name, Image_url: pl.Image_url, Price: it.Price, Quantity: it.Quantity})
+	}
+
+	return productItems
 }
