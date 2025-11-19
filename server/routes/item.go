@@ -11,7 +11,7 @@ import (
 
 func Item(router *chi.Mux) {
 	router.Post("/item/insert", func(w http.ResponseWriter, r *http.Request) {
-		ir, _ := serverio.Insert[types.ItemRequest](r)
+		ir, _ := serverio.GetStructFromRequestBody[types.ItemRequest](r)
 		item.Insert(dl, ir.Item)
 	})
 

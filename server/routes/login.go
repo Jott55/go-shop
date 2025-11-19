@@ -10,7 +10,7 @@ import (
 
 func Login(router *chi.Mux) {
 	router.Post("/login/user", func(w http.ResponseWriter, r *http.Request) {
-		luser, err := serverio.Insert[types.LoginUser](r)
+		luser, err := serverio.GetStructFromRequestBody[types.LoginUser](r)
 		if checkError(err) {
 			w.WriteHeader(400)
 			return

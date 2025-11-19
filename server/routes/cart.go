@@ -20,7 +20,7 @@ func Cart(router *chi.Mux) {
 	})
 
 	router.Post("/cart/insert", func(w http.ResponseWriter, r *http.Request) {
-		cr, _ := serverio.Insert[types.CartRequest](r)
+		cr, _ := serverio.GetStructFromRequestBody[types.CartRequest](r)
 		cart.Insert(dl, cr.Cart)
 	})
 
