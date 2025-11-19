@@ -1,12 +1,11 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
 	"jott55/go-shop/product"
-	"jott55/go-shop/types"
+	"jott55/go-shop/server/routes"
 	"jott55/go-shop/user"
 	"jott55/go-shop/user/cart"
 	"jott55/go-shop/user/cart/item"
@@ -15,7 +14,6 @@ import (
 
 	"encoding/json"
 
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -165,195 +163,6 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 	w.Write(img)
 }
 
-func createProducts(w http.ResponseWriter, r *http.Request) {
-	product.CreateTable(shopDB)
-}
-
-func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
-
-	if noDb(shopDB) {
-		return
-	}
-
-	pd, err := product.GetAllSimplyfied(shopDB, 0, 100000)
-
-	if checkError(err) {
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	content, err := json.Marshal(pd)
-
-	if checkError(err) {
-		return
-	}
-
-	clog.Log(clog.DEBUG, "Json was created ")
-	w.Write(content)
-}
-
-func getId(r *http.Request) (int, error) {
-	return strconv.Atoi(chi.URLParam(r, "id"))
-}
-
-func getProduct(w http.ResponseWriter, r *http.Request) {
-	product_id_param := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(product_id_param)
-
-	if err != nil {
-		clog.Log(clog.ERROR, err, "product of id: ", id)
-	}
-
-	if checkError(err, "product of id: ", id) {
-		return
-	}
-
-	if noDb(shopDB) {
-		return
-	}
-
-	product, err := product.Get(shopDB, id)
-
-	if err != nil {
-		clog.Log(clog.ERROR, err)
-		return
-	}
-
-	fmt.Println(product)
-
-	w.Header().Set("Content-Type", "application/json")
-	content, err := json.Marshal(product)
-
-	if checkError(err) {
-		return
-	}
-
-	clog.Log(clog.DEBUG, "product json")
-	w.Write(content)
-}
-
-func insertProduct(w http.ResponseWriter, r *http.Request) {
-
-	var pr types.ProductRequest
-
-	err := json.NewDecoder(r.Body).Decode(&pr)
-
-	if checkError(err) {
-		return
-	}
-
-	if noDb(shopDB) {
-		return
-	}
-
-	fmt.Println(pr)
-
-	fmt.Println("inserting")
-
-	product.Insert(shopDB, pr.Product)
-
-}
-
-func deleteProduct(w http.ResponseWriter, r *http.Request) {
-	product_id_param := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(product_id_param)
-	if checkError(err) {
-		return
-	}
-
-	if noDb(shopDB) {
-		return
-	}
-
-	product.Delete(shopDB, id)
-}
-
-func createUsers(w http.ResponseWriter, r *http.Request) {
-	user.CreateTable(shopDB)
-}
-
-func sendJson(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	content, err := json.Marshal(v)
-	if checkError(err) {
-		return
-	}
-
-	w.Write(content)
-}
-
-func getUser(w http.ResponseWriter, r *http.Request) {
-
-	id, err := getId(r)
-
-	if checkError(err) {
-		return
-	}
-
-	user, err := user.Get(shopDB, id)
-
-	if checkError(err) {
-		return
-	}
-
-	sendJson(w, user)
-}
-
-func getUsers(w http.ResponseWriter, r *http.Request) {
-	users := user.GetWhere(shopDB, 0, 10)
-
-	sendJson(w, users)
-}
-
-func insertUser(w http.ResponseWriter, r *http.Request) {
-	var us types.UserRequest
-
-	err := json.NewDecoder(r.Body).Decode(&us)
-
-	if checkError(err) {
-		return
-	}
-
-	if noDb(shopDB) {
-		return
-	}
-
-	user.Insert(shopDB, us.User)
-}
-
-func dropUsers(w http.ResponseWriter, r *http.Request) {
-	user.Drop(shopDB)
-}
-
-func deleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := getId(r)
-	checkError(err)
-	debug("deleting user: ", id)
-
-	user.Delete(shopDB, id)
-
-}
-
-func insert[T any](r *http.Request) (T, error) {
-
-	var struc T
-
-	err := json.NewDecoder(r.Body).Decode(&struc)
-
-	if checkError(err) {
-		return struc, err
-	}
-
-	if noDb(shopDB) {
-		return struc, errors.ErrUnsupported
-	}
-
-	debug(struc)
-
-	return struc, nil
-}
-
 func doRouterShit() {
 
 	clog.Log(clog.INFO, "initializing router")
@@ -384,36 +193,6 @@ func doRouterShit() {
 
 	router.Get("/images/{name}", getImage)
 
-	router.Get("/create/products", createProducts)
-
-	router.Get("/product", getProductsSimplyfied)
-
-	router.Get("/product/{id}", getProduct)
-
-	router.Post("/product/insert", insertProduct)
-
-	router.Get("/product/{id}/delete", deleteProduct)
-
-	router.Get("/user/create", createUsers)
-
-	router.Get("/user/drop", dropUsers)
-
-	router.Get("/user/{id}", getUser)
-
-	router.Get("/user", getUsers)
-
-	router.Post("/user/insert", insertUser)
-
-	router.Get("/user/{id}/delete", deleteUser)
-
-	router.Get("/cart/create", func(w http.ResponseWriter, r *http.Request) {
-		cart.CreateTable(shopDB)
-	})
-
-	router.Get("/cart/item/create", func(w http.ResponseWriter, r *http.Request) {
-		item.CreateTable(shopDB)
-	})
-
 	router.Get("/createAllTables", func(w http.ResponseWriter, r *http.Request) {
 		user.CreateTable(shopDB)
 		product.CreateTable(shopDB)
@@ -428,66 +207,8 @@ func doRouterShit() {
 		user.Drop(shopDB)
 	})
 
-	router.Post("/cart/insert", func(w http.ResponseWriter, r *http.Request) {
-		cr, _ := insert[types.CartRequest](r)
-		cart.Insert(shopDB, cr.Cart)
-	})
-	router.Post("/item/insert", func(w http.ResponseWriter, r *http.Request) {
-		ir, _ := insert[types.ItemRequest](r)
-		item.Insert(shopDB, ir.Item)
-	})
-
-	router.Get("/cart/{id}/delete", func(w http.ResponseWriter, r *http.Request) {
-		id, _ := getId(r)
-		cart.Delete(shopDB, id)
-	})
-	router.Get("/item/{id}/delete", func(w http.ResponseWriter, r *http.Request) {
-		id, _ := getId(r)
-		item.Delete(shopDB, id)
-	})
-
-	router.Get("/cart", func(w http.ResponseWriter, r *http.Request) {
-		cs := cart.GetAll(shopDB)
-		sendJson(w, cs)
-	})
-	router.Get("/item", func(w http.ResponseWriter, r *http.Request) {
-		is := item.GetAll(shopDB)
-		sendJson(w, is)
-	})
-
-	router.Get("/cart/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, _ := getId(r)
-		c, _ := cart.Get(shopDB, id)
-		sendJson(w, c)
-	})
-	router.Get("/item/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, _ := getId(r)
-		i, _ := item.Get(shopDB, id)
-		sendJson(w, i)
-	})
-
-	router.Get("/user/{id}/cart", func(w http.ResponseWriter, r *http.Request) {
-		user_id, _ := getId(r)
-		cart_id := cart.GetIdByUserId(shopDB, user_id)
-		items := item.GetByCartId(shopDB, cart_id)
-
-		productsItems := product.GetProductsFromItems(shopDB, items)
-		sendJson(w, productsItems)
-	})
-
-	router.Post("/login/user", func(w http.ResponseWriter, r *http.Request) {
-		luser, err := insert[types.LoginUser](r)
-		if checkError(err) {
-			w.WriteHeader(400)
-			return
-		}
-
-		debug(luser)
-	})
-
-	router.Post("/register/user", func(w http.ResponseWriter, r *http.Request) {
-		ruser, err := insert[types.User](r)
-	})
+	routes.SetDatabase(shopDB)
+	routes.Start(router)
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
