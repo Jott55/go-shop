@@ -1,11 +1,11 @@
-package item
+package cart_item
 
 import (
 	"fmt"
 	"jott55/go-shop/database"
-	"jott55/go-shop/product"
+	"jott55/go-shop/services/cart"
+	"jott55/go-shop/services/product"
 	"jott55/go-shop/types"
-	"jott55/go-shop/user/cart"
 )
 
 const Table = "cart_item"

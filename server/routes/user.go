@@ -2,12 +2,12 @@ package routes
 
 import (
 	"encoding/json"
-	"jott55/go-shop/product"
 	"jott55/go-shop/server/serverio"
+	"jott55/go-shop/services/cart"
+	"jott55/go-shop/services/cart_item"
+	"jott55/go-shop/services/product"
+	"jott55/go-shop/services/user"
 	"jott55/go-shop/types"
-	"jott55/go-shop/user"
-	"jott55/go-shop/user/cart"
-	"jott55/go-shop/user/cart/item"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -85,9 +85,24 @@ func User(router *chi.Mux) {
 	router.Get("/user/{id}/delete", deleteUser)
 
 	router.Get("/user/{id}/cart", func(w http.ResponseWriter, r *http.Request) {
+
+		tk := r.Header.Get("Authorization")
+
+		if len(tk) < 1 {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		claims := decryptTokenString(tk)
+		if len(claims) < 1 {
+			w.WriteHeader(http.StatusForbidden)
+		}
+
+		debug(claims, "You Got It!!!s")
+
 		user_id, _ := serverio.GetId(r)
 		cart_id := cart.GetIdByUserId(dl, user_id)
-		items := item.GetByCartId(dl, cart_id)
+		items := cart_item.GetByCartId(dl, cart_id)
 
 		productsItems := product.GetProductsFromItems(dl, items)
 		serverio.SendJson(w, productsItems)

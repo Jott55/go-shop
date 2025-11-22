@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
+	"jott55/go-shop/services/user"
 	"jott55/go-shop/types"
-	"jott55/go-shop/user"
 )
 
 const Table = "cart"

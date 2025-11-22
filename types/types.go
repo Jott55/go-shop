@@ -5,7 +5,7 @@ type ProductRequest struct {
 }
 
 type UserRequest struct {
-	User *UserInsert
+	User *UserNoId
 }
 
 type CartRequest struct {
@@ -85,7 +85,7 @@ type User struct {
 	Photo_url string
 }
 
-type UserInsert struct {
+type UserNoId struct {
 	Name      string
 	Email     string
 	Password  string

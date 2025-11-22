@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
-	"jott55/go-shop/product"
+	"jott55/go-shop/services/cart"
+	"jott55/go-shop/services/cart_item"
+	"jott55/go-shop/services/product"
+	"jott55/go-shop/services/user"
+
 	"jott55/go-shop/server/routes"
-	"jott55/go-shop/user"
-	"jott55/go-shop/user/cart"
-	"jott55/go-shop/user/cart/item"
+
 	"net/http"
 	"os"
 
@@ -165,7 +167,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 
 func doRouterShit() {
 
-	clog.Log(clog.INFO, "initializing router")
+	clog.Log(clog.INFO, "initializing router\n", "Access admin page at http://localhost:8069/admin")
 
 	router := chi.NewRouter()
 
@@ -197,11 +199,11 @@ func doRouterShit() {
 		user.CreateTable(shopDB)
 		product.CreateTable(shopDB)
 		cart.CreateTable(shopDB)
-		item.CreateTable(shopDB)
+		cart_item.CreateTable(shopDB)
 	})
 
 	router.Get("/deleteAllTables", func(w http.ResponseWriter, r *http.Request) {
-		item.Drop(shopDB)
+		cart_item.Drop(shopDB)
 		cart.Drop(shopDB)
 		product.Drop(shopDB)
 		user.Drop(shopDB)
@@ -253,11 +255,12 @@ func Run() {
 
 	shopDB = database.Create()
 
+	defer database.Close(shopDB)
+
 	configure(shopDB)
 
 	startDatabase(shopDB)
 
 	doRouterShit()
 
-	database.Close(shopDB)
 }

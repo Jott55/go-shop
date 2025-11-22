@@ -26,7 +26,7 @@ func CreateTable(dl *database.DatabaseLink) {
 		id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 		name VARCHAR(50),
 		email VARCHAR(50),
-		password_hash VARCHAR(64),
+		password VARCHAR(64),
 		photo_url VARCHAR(255)
 	`
 
@@ -45,10 +45,14 @@ func GetWhere(dl *database.DatabaseLink, id_min int, id_max int) []types.User {
 	return database.GenericGetWhere[types.User](dl, Table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
-func Insert(dl *database.DatabaseLink, user *types.UserInsert) database.DatabaseResponse {
+func Insert(dl *database.DatabaseLink, user *types.UserNoId) database.DatabaseResponse {
 	return database.GenericInsert(dl, Table, user)
 }
 
 func Delete(dl *database.DatabaseLink, id int) error {
 	return database.DeleteById(dl, Table, id)
 }
+
+// func CreateCart(dl *database.DatabaseLink, user_token Token) {
+
+// }

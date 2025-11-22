@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"jott55/go-shop/clog"
-	"jott55/go-shop/product"
+	"jott55/go-shop/services/product"
 	"jott55/go-shop/types"
 	"net/http"
 	"strconv"
