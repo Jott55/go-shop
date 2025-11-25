@@ -10,6 +10,23 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type IDatabase interface {
+	Create()
+	Configure(dinfo DatabaseInfo)
+	Init() error
+	Exec(sql string, args ...any) (DatabaseResponse, error)
+	Close() error
+	QueryRow(sql string, dest ...any) error
+	Query(sql string) (pgx.Rows, error)
+	Insert(table string, t any) DatabaseResponse
+	DeleteById(table string, id int) error
+	CreateTable(table string, fields string)
+	CreateIndex(table string, columns []string)
+	DropTable(table string)
+	DeleteFromTableById(table string, id int)
+	DeleteFromTableWhere(table string, condition string)
+}
+
 type DatabaseInfo struct {
 	User     string
 	Password string
@@ -23,8 +40,16 @@ type DatabaseLink struct {
 	con  *pgx.Conn
 }
 
+type Response interface {
+	String() string
+}
+
 type DatabaseResponse struct {
-	str string
+	msg string
+}
+
+func (dr DatabaseResponse) String() string {
+	return dr.msg
 }
 
 type FieldAddress struct {
@@ -53,11 +78,11 @@ func Create() *DatabaseLink {
 	return &DatabaseLink{}
 }
 
-func Configure(dl *DatabaseLink, dinfo DatabaseInfo) {
+func (dl *DatabaseLink) Configure(dinfo DatabaseInfo) {
 	dl.info = &dinfo
 }
 
-func Init(dl *DatabaseLink) error {
+func (dl *DatabaseLink) Init() error {
 	db := dl.info
 
 	if db.User == "" || db.Password == "" || db.Host == "" || db.Port == "" || db.Database == "" {
@@ -75,25 +100,21 @@ func Init(dl *DatabaseLink) error {
 	return nil
 }
 
-func Exec(dl *DatabaseLink, sql string, args ...any) (DatabaseResponse, error) {
+func (dl *DatabaseLink) Exec(sql string, args ...any) (DatabaseResponse, error) {
 	comm, err := dl.con.Exec(context.Background(), sql, args...)
-	return newDatabaseResponse(comm.String()), err
+	return DatabaseResponse{comm.String()}, err
 }
 
-func Close(dl *DatabaseLink) error {
+func (dl *DatabaseLink) Close() error {
 	return dl.con.Close(context.Background())
 }
 
-func QueryRow(dl *DatabaseLink, sql string, dest ...any) error {
+func (dl *DatabaseLink) QueryRow(sql string, dest ...any) error {
 	return dl.con.QueryRow(context.Background(), sql).Scan(dest...)
 }
 
-func Query(dl *DatabaseLink, sql string) (pgx.Rows, error) {
+func (dl *DatabaseLink) Query(sql string) (pgx.Rows, error) {
 	return dl.con.Query(context.Background(), sql)
-}
-
-func newDatabaseResponse(str string) DatabaseResponse {
-	return DatabaseResponse{str}
 }
 
 func CollectRows[T any](rows pgx.Rows) ([]T, error) {
@@ -108,7 +129,7 @@ func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 	items := strings.Join(fa.fieldName, ", ")
 	sql_string := fmt.Sprintf(`SELECT %v FROM %v WHERE id=%v`, items, table, id)
 
-	err := QueryRow(dl, sql_string, fa.fieldAddress...)
+	err := dl.QueryRow(sql_string, fa.fieldAddress...)
 
 	if checkError(err) {
 		return serial, err
@@ -122,7 +143,7 @@ func GenericGet[T any](dl *DatabaseLink, table string, id int) (T, error) {
 }
 
 // t = pointer to a struct
-func GenericInsert(dl *DatabaseLink, table string, t any) DatabaseResponse {
+func (dl *DatabaseLink) Insert(table string, t any) DatabaseResponse {
 	fv := getStructValues(t)
 
 	cols := strings.Join(fv.fieldName, ", ")
@@ -138,7 +159,7 @@ func GenericInsert(dl *DatabaseLink, table string, t any) DatabaseResponse {
 
 	debug(sql_insert)
 
-	tag, err := Exec(dl, sql_insert)
+	tag, err := dl.Exec(sql_insert)
 
 	checkError(err)
 
@@ -151,7 +172,7 @@ func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 	cols := strings.Join(names, ", ")
 	sql_string := fmt.Sprintf(`SELECT %v FROM %v WHERE %v`, cols, table, where)
 
-	rows, err := Query(dl, sql_string)
+	rows, err := dl.Query(sql_string)
 	if checkError(err) {
 		return nil
 	}
@@ -230,22 +251,18 @@ func getStructNames[T any]() []string {
 	return fieldsName
 }
 
-func isPointer(v reflect.Kind) {
-	if v != reflect.Pointer {
-		panic(fmt.Sprintf("expected pointer to a struct, received %s", v))
-	}
+func isPointer(v reflect.Kind) bool {
+	return v == reflect.Pointer
 }
 
-func isStruct(v reflect.Kind) {
-	if v != reflect.Struct {
-		panic(fmt.Sprintf("expected a struct, received %s", v))
-	}
+func isStruct(v reflect.Kind) bool {
+	return v == reflect.Struct
 }
 
-func DeleteById(dl *DatabaseLink, table string, id int) error {
+func (dl *DatabaseLink) DeleteById(table string, id int) error {
 	sql_delete := fmt.Sprintf("DELETE FROM %v WHERE id=%v", table, id)
 
-	_, err := Exec(dl, sql_delete)
+	_, err := dl.Exec(sql_delete)
 
 	if checkError(err) {
 		return err
@@ -253,54 +270,54 @@ func DeleteById(dl *DatabaseLink, table string, id int) error {
 	return nil
 }
 
-func CreateTable(dl *DatabaseLink, table string, fields string) {
+func (dl *DatabaseLink) CreateTable(table string, fields string) {
 	sql_table := fmt.Sprintf(`CREATE TABLE %v (%v)`, table, fields)
 
-	dr, err := Exec(dl, sql_table)
+	dr, err := dl.Exec(sql_table)
 
 	if checkError(err) {
 		return
 	}
 
-	debug(dr.str, sql_table)
+	debug(dr, sql_table)
 }
 
-func CreateIndex(dl *DatabaseLink, table string, columns []string) {
+func (dl *DatabaseLink) CreateIndex(table string, columns []string) {
 	cols := strings.Join(columns, ", ")
 	sql_index := fmt.Sprintf(`CREATE INDEX %s_index ON %s (%v)`, table, table, cols)
 
-	dr, err := Exec(dl, sql_index)
+	dr, err := dl.Exec(sql_index)
 
 	if checkError(err) {
 		return
 	}
 
-	debug(dr.str, sql_index)
+	debug(dr, sql_index)
 }
 
-func DropTable(dl *DatabaseLink, table string) {
+func (dl *DatabaseLink) DropTable(table string) {
 	sql_drop := fmt.Sprintf(`DROP TABLE %s`, table)
 
-	dr, err := Exec(dl, sql_drop)
+	dr, err := dl.Exec(sql_drop)
 
 	if checkError(err) {
 		return
 	}
 
-	debug(dr.str)
+	debug(dr)
 
 }
 
-func DeleteFromTableById(dl *DatabaseLink, table string, id int) {
+func (dl *DatabaseLink) DeleteFromTableById(table string, id int) {
 	sql_delete := fmt.Sprintf(`DELETE FROM %s WHERE id=%d`, table, id)
 
-	_, err := Exec(dl, sql_delete)
+	_, err := dl.Exec(sql_delete)
 	checkError(err)
 }
 
-func DeleteFromTableWhere(dl *DatabaseLink, table string, condition string) {
+func (dl *DatabaseLink) DeleteFromTableWhere(table string, condition string) {
 	sql_delete := fmt.Sprintf(`DELETE FROM %s WHERE %s`, table, condition)
 
-	_, err := Exec(dl, sql_delete)
+	_, err := dl.Exec(sql_delete)
 	checkError(err)
 }
