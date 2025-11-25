@@ -11,12 +11,12 @@ type CartService struct {
 	table string
 }
 
-func (c *CartService) GetIdByUserId(user_id int) int {
+func (c *CartService) GetIdByUserId(user_id int) (int, error) {
 	ar := database.GenericGetWhere[types.CartId](c.dl, c.table, fmt.Sprintf("%s=%d", "user_id", user_id))
 	if len(ar) == 1 {
-		return ar[0].Id
+		return ar[0].Id, nil
 	}
-	return 0
+	return 0, CreateError(NOT_FOUND, "no carts for user of id: %d", user_id)
 }
 
 func (c *CartService) Init(dl *database.DatabaseLink, table_name string) {

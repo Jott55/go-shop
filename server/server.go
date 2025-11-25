@@ -22,14 +22,6 @@ import (
 
 var shopDB *database.DatabaseLink
 
-func noDb(dl *database.DatabaseLink) bool {
-	if dl == nil {
-		clog.Log(clog.ERROR, "no db connection, returning")
-		return true
-	}
-	return false
-}
-
 func checkFileExist(name string) bool {
 	file, err := os.Open(name)
 	file.Close()
@@ -163,16 +155,7 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 
 func doRouterShit() {
 
-	var ser services.Services
-	ser.User = &services.UserService{}
-	ser.Product = &services.ProductService{}
-	ser.Cart = &services.CartService{}
-	ser.Cart_item = &services.CartItemService{}
-
-	ser.User.Init(shopDB, "users")
-	ser.Product.Init(shopDB, "products")
-	ser.Cart.Init(shopDB, "cart")
-	ser.Cart_item.Init(shopDB, "cart_item")
+	var ser = services.CreateServices(shopDB, "cart", "cart_item", "products", "users")
 
 	clog.Log(clog.INFO, "initializing router\n", "Access admin page at http://localhost:8069/admin")
 

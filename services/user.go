@@ -11,6 +11,10 @@ type UserService struct {
 	dl    *database.DatabaseLink
 }
 
+type UserId struct {
+	Id int
+}
+
 func (u *UserService) Init(dl *database.DatabaseLink, table_name string) {
 	u.dl = dl
 	u.table = table_name
@@ -46,4 +50,12 @@ func (u *UserService) Create() {
 
 func (u *UserService) Delete(id int) error {
 	return u.dl.DeleteById(u.table, id)
+}
+
+func (u *UserService) GetIdByName(user_name string) (int, error) {
+	user := database.GenericGetWhere[UserId](u.dl, u.table, fmt.Sprintf("name=%s", user_name))
+	if len(user) == 1 {
+		return user[0].Id, nil
+	}
+	return 0, CreateError(NOT_FOUND, "user of name: %s not found", user_name)
 }

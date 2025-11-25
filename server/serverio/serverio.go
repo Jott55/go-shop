@@ -42,6 +42,8 @@ func SendJson(w http.ResponseWriter, v any) {
 func GetId(r *http.Request) (int, error) {
 	return strconv.Atoi(chi.URLParam(r, "id"))
 }
+
+// Accept any request struct
 func GetStructFromRequestBody[T any](r *http.Request) (T, error) {
 
 	var struc T
