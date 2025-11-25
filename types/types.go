@@ -1,7 +1,11 @@
 package types
 
 type ProductRequest struct {
-	Product *Product
+	Product *ProductNoId
+}
+
+type ProductIdRequest struct {
+	Product_id int
 }
 
 type UserRequest struct {
@@ -25,6 +29,13 @@ type ProductView struct {
 
 type Product struct {
 	Id          int
+	Name        string
+	Image_url   string
+	Price       int
+	Description string
+}
+
+type ProductNoId struct {
 	Name        string
 	Image_url   string
 	Price       int

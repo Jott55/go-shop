@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"jott55/go-shop/server/serverio"
+	"jott55/go-shop/services"
 	"jott55/go-shop/types"
 	"net/http"
 
@@ -77,14 +78,32 @@ func User(router chi.Router) {
 
 	router.Get("/user/cart", func(w http.ResponseWriter, r *http.Request) {
 
-		username := r.Context().Value(username_key).(string)
+		username := getKey[string](r, username_key)
 
 		debug(username)
+		user_id, err := ser.User.GetIdByName(username)
 
-		cart_id := ser.Cart.GetIdByUserId(1)
+		checkError(err)
+
+		if err.(services.ServiceError).Code() == services.NOT_FOUND {
+			ser.Cart.Insert(&types.CartNoId{User_id: user_id})
+		}
+
+		cart_id, err := ser.Cart.GetIdByUserId(user_id)
+
+		checkError(err)
+
 		items := ser.Cart_item.GetByCartId(cart_id)
 
 		productsItems := ser.Product.GetProductsFromItems(items)
 		serverio.SendJson(w, productsItems)
+	})
+
+	router.Get("/user/item/add", func(w http.ResponseWriter, r *http.Request) {
+		// Get product id and cart id
+
+		// Check existent item by product id and cart id
+
+		// if exists sum
 	})
 }

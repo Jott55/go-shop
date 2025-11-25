@@ -24,7 +24,7 @@ func (p *ProductService) GetWhere(id_min int, id_max int) []types.Product {
 	return database.GenericGetWhere[types.Product](p.dl, p.table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
-func (p *ProductService) Insert(product *types.Product) database.DatabaseResponse {
+func (p *ProductService) Insert(product *types.ProductNoId) database.DatabaseResponse {
 	return p.dl.Insert(p.table, product)
 }
 func (p *ProductService) Drop() {

@@ -40,6 +40,10 @@ func debug(msg ...any) {
 	clog.Log(clog.DEBUG, msg...)
 }
 
+func getKey[T any](r *http.Request, key_name key) T {
+	return r.Context().Value(key_name).(T)
+}
+
 func LoginMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
