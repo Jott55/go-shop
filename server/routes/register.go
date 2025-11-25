@@ -2,7 +2,6 @@ package routes
 
 import (
 	"jott55/go-shop/server/serverio"
-	"jott55/go-shop/services/user"
 	"jott55/go-shop/types"
 	"net/http"
 
@@ -21,7 +20,7 @@ func Register(router *chi.Mux) {
 			return
 		}
 
-		user.Insert(dl, request.User)
+		ser.User.Insert(request.User)
 
 		token := createTokenString(request.User.Name)
 

@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
 	"jott55/go-shop/types"
 )
@@ -10,18 +9,6 @@ import (
 type ProductService struct {
 	table string
 	dl    *database.DatabaseLink
-}
-
-func checkError(err error, msg ...any) bool {
-	if err != nil {
-		clog.Logger(clog.ERROR, 2, err, msg)
-		return true
-	}
-	return false
-}
-
-func debug(msg ...any) {
-	clog.Log(clog.DEBUG, msg...)
 }
 
 func (p *ProductService) Init(dl *database.DatabaseLink, table_name string) {
@@ -37,7 +24,7 @@ func (p *ProductService) GetWhere(id_min int, id_max int) []types.Product {
 	return database.GenericGetWhere[types.Product](p.dl, p.table, fmt.Sprintf("id BETWEEN %v AND %v", id_min, id_max))
 }
 
-func (p *ProductService) Insert(product types.Product) database.DatabaseResponse {
+func (p *ProductService) Insert(product *types.Product) database.DatabaseResponse {
 	return p.dl.Insert(p.table, product)
 }
 func (p *ProductService) Drop() {

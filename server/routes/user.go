@@ -3,10 +3,6 @@ package routes
 import (
 	"encoding/json"
 	"jott55/go-shop/server/serverio"
-	"jott55/go-shop/services/cart"
-	"jott55/go-shop/services/cart_item"
-	"jott55/go-shop/services/product"
-	"jott55/go-shop/services/user"
 	"jott55/go-shop/types"
 	"net/http"
 
@@ -14,7 +10,7 @@ import (
 )
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
-	users := user.GetWhere(dl, 0, 10)
+	users := ser.User.GetWhere(0, 10)
 
 	serverio.SendJson(w, users)
 }
@@ -28,15 +24,11 @@ func insertUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if noDb(dl) {
-		return
-	}
-
-	user.Insert(dl, us.User)
+	ser.User.Insert(us.User)
 }
 
 func dropUsers(w http.ResponseWriter, r *http.Request) {
-	user.Drop(dl)
+	ser.User.Drop()
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
@@ -44,12 +36,12 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	checkError(err)
 	debug("deleting user: ", id)
 
-	user.Delete(dl, id)
+	ser.User.Delete(id)
 
 }
 
 func createUsers(w http.ResponseWriter, r *http.Request) {
-	user.CreateTable(dl)
+	ser.User.Create()
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +52,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := user.Get(dl, id)
+	user, err := ser.User.Get(id)
 
 	if checkError(err) {
 		return
@@ -70,7 +62,6 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(router chi.Router) {
-	noDb(dl)
 
 	router.Get("/user/create", createUsers)
 
@@ -90,10 +81,10 @@ func User(router chi.Router) {
 
 		debug(username)
 
-		cart_id := cart.GetIdByUserId(dl, 1)
-		items := cart_item.GetByCartId(dl, cart_id)
+		cart_id := ser.Cart.GetIdByUserId(1)
+		items := ser.Cart_item.GetByCartId(cart_id)
 
-		productsItems := product.GetProductsFromItems(dl, items)
+		productsItems := ser.Product.GetProductsFromItems(items)
 		serverio.SendJson(w, productsItems)
 	})
 }

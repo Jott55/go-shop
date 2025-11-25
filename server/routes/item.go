@@ -2,7 +2,6 @@ package routes
 
 import (
 	"jott55/go-shop/server/serverio"
-	"jott55/go-shop/services/cart_item"
 	"jott55/go-shop/types"
 	"net/http"
 
@@ -12,27 +11,27 @@ import (
 func Item(router *chi.Mux) {
 	router.Post("/item/insert", func(w http.ResponseWriter, r *http.Request) {
 		ir, _ := serverio.GetStructFromRequestBody[types.ItemRequest](r)
-		cart_item.Insert(dl, ir.Item)
+		ser.Cart_item.Insert(ir.Item)
 	})
 
 	router.Get("/item/{id}/delete", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := serverio.GetId(r)
-		cart_item.Delete(dl, id)
+		ser.Cart_item.Delete(id)
 	})
 
 	router.Get("/item", func(w http.ResponseWriter, r *http.Request) {
-		is := cart_item.GetAll(dl)
+		is := ser.Cart_item.GetWhere(0, 100)
 		serverio.SendJson(w, is)
 	})
 
 	router.Get("/item/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := serverio.GetId(r)
-		i, _ := cart_item.Get(dl, id)
+		i, _ := ser.Cart_item.Get(id)
 		serverio.SendJson(w, i)
 	})
 
 	router.Get("/cart/item/create", func(w http.ResponseWriter, r *http.Request) {
-		cart_item.CreateTable(dl)
+		ser.Cart_item.Create()
 	})
 
 }

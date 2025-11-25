@@ -4,12 +4,8 @@ import (
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
-	"jott55/go-shop/services/cart"
-	"jott55/go-shop/services/cart_item"
-	"jott55/go-shop/services/product"
-	"jott55/go-shop/services/user"
-
 	"jott55/go-shop/server/routes"
+	"jott55/go-shop/services"
 
 	"net/http"
 	"os"
@@ -109,10 +105,10 @@ func configure(dl *database.DatabaseLink) {
 		return
 	}
 
-	var db database.DatabaseInfo
-	json.Unmarshal(dat, &db)
+	var di database.DatabaseInfo
+	json.Unmarshal(dat, &di)
 
-	database.Configure(dl, db)
+	dl.Configure(di)
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
@@ -167,6 +163,17 @@ func getImage(w http.ResponseWriter, r *http.Request) {
 
 func doRouterShit() {
 
+	var ser services.Services
+	ser.User = &services.UserService{}
+	ser.Product = &services.ProductService{}
+	ser.Cart = &services.CartService{}
+	ser.Cart_item = &services.CartItemService{}
+
+	ser.User.Init(shopDB, "users")
+	ser.Product.Init(shopDB, "products")
+	ser.Cart.Init(shopDB, "cart")
+	ser.Cart_item.Init(shopDB, "cart_item")
+
 	clog.Log(clog.INFO, "initializing router\n", "Access admin page at http://localhost:8069/admin")
 
 	router := chi.NewRouter()
@@ -196,21 +203,20 @@ func doRouterShit() {
 	router.Get("/images/{name}", getImage)
 
 	router.Get("/createAllTables", func(w http.ResponseWriter, r *http.Request) {
-		user.CreateTable(shopDB)
-		product.CreateTable(shopDB)
-		cart.CreateTable(shopDB)
-		cart_item.CreateTable(shopDB)
+		ser.User.Create()
+		ser.Product.Create()
+		ser.Cart.Create()
+		ser.Cart_item.Create()
 	})
 
 	router.Get("/deleteAllTables", func(w http.ResponseWriter, r *http.Request) {
-		cart_item.Drop(shopDB)
-		cart.Drop(shopDB)
-		product.Drop(shopDB)
-		user.Drop(shopDB)
+		ser.Cart_item.Drop()
+		ser.Cart.Drop()
+		ser.Product.Drop()
+		ser.User.Drop()
 	})
 
-	routes.SetDatabase(shopDB)
-	routes.Start(router)
+	routes.Start(router, &ser)
 
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
@@ -222,7 +228,7 @@ func doRouterShit() {
 
 func startDatabase(dl *database.DatabaseLink) {
 
-	err := database.Init(dl) // fill database link
+	err := dl.Init() // fill database link
 
 	if err != nil {
 		var str string
@@ -255,7 +261,7 @@ func Run() {
 
 	shopDB = database.Create()
 
-	defer database.Close(shopDB)
+	defer shopDB.Close()
 
 	configure(shopDB)
 

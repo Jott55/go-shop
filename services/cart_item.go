@@ -25,7 +25,7 @@ func (ci *CartItemService) Get(id int) (types.Item, error) {
 func (ci *CartItemService) GetWhere(id_min int, id_max int) []types.Item {
 	return database.GenericGetWhere[types.Item](ci.dl, ci.table, "true")
 }
-func (ci *CartItemService) Insert(item types.Item) database.DatabaseResponse {
+func (ci *CartItemService) Insert(item *types.ItemNoId) database.DatabaseResponse {
 	return ci.dl.Insert(ci.table, item)
 }
 

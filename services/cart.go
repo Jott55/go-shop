@@ -32,7 +32,7 @@ func (c *CartService) GetWhere(id_min int, id_max int) []types.Cart {
 	return database.GenericGetWhere[types.Cart](c.dl, c.table, "true")
 }
 
-func (c *CartService) Insert(cart *types.Cart) database.DatabaseResponse {
+func (c *CartService) Insert(cart *types.CartNoId) database.DatabaseResponse {
 	return c.dl.Insert(c.table, cart)
 }
 

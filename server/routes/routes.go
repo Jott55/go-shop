@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"jott55/go-shop/clog"
 	"jott55/go-shop/database"
+	"jott55/go-shop/services"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -16,7 +17,9 @@ const (
 	username_key key = iota
 )
 
-var dl *database.DatabaseLink
+var (
+	ser *services.Services
+)
 
 func checkError(err error, msg ...any) bool {
 	if err != nil {
@@ -62,7 +65,9 @@ func LoginMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func Start(mux *chi.Mux) {
+func Start(mux *chi.Mux, s *services.Services) {
+
+	ser = s // init services
 
 	mux.Group(func(router chi.Router) {
 		router.Use(LoginMiddleware)
@@ -76,13 +81,9 @@ func Start(mux *chi.Mux) {
 		User(router)
 	})
 
-	Cart(mux)
+	Cart(mux, ser.Cart)
 	Item(mux)
 	Login(mux)
 	Product(mux)
 	Register(mux)
-}
-
-func SetDatabase(databaselink *database.DatabaseLink) {
-	dl = databaselink
 }

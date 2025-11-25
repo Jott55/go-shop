@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"jott55/go-shop/clog"
-	"jott55/go-shop/services/product"
+
 	"jott55/go-shop/types"
 	"net/http"
 	"strconv"
@@ -25,11 +25,7 @@ func getProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if noDb(dl) {
-		return
-	}
-
-	product, err := product.Get(dl, id)
+	product, err := ser.Product.Get(id)
 
 	if err != nil {
 		clog.Log(clog.ERROR, err)
@@ -59,33 +55,21 @@ func insertProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if noDb(dl) {
-		return
-	}
-
 	fmt.Println(pr)
 
 	fmt.Println("inserting")
 
-	product.Insert(dl, pr.Product)
+	ser.Product.Insert(pr.Product)
 
 }
 
 func createProducts(w http.ResponseWriter, r *http.Request) {
-	product.CreateTable(dl)
+	ser.Product.Create()
 }
 
 func getProductsSimplyfied(w http.ResponseWriter, r *http.Request) {
 
-	if noDb(dl) {
-		return
-	}
-
-	pd, err := product.GetAllSimplyfied(dl, 0, 100000)
-
-	if checkError(err) {
-		return
-	}
+	pd := ser.Product.GetWhere(0, 100)
 
 	w.Header().Set("Content-Type", "application/json")
 	content, err := json.Marshal(pd)
@@ -105,11 +89,7 @@ func deleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if noDb(dl) {
-		return
-	}
-
-	product.Delete(dl, id)
+	ser.Product.Delete(id)
 }
 
 func Product(router *chi.Mux) {

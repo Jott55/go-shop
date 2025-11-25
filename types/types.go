@@ -1,7 +1,5 @@
 package types
 
-import "jott55/go-shop/database"
-
 type ProductRequest struct {
 	Product *Product
 }
@@ -97,14 +95,4 @@ type UserNoId struct {
 type LoginUser struct {
 	Email    string
 	Password string
-}
-
-type IService[T any] interface {
-	Init(dl *database.DatabaseLink, table_name string)
-	Get(id int) (T, error)
-	GetWhere(id_min int, id_max int) []T
-	Insert(t T) database.DatabaseResponse
-	Drop()
-	Create()
-	Delete(id int) error
 }
