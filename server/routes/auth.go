@@ -1,25 +1,29 @@
 package routes
 
 import (
+	"crypto"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func Authorize() {
-}
+var public_key crypto.PublicKey
+var private_key crypto.PrivateKey
 
 func decryptTokenString(token_string string) map[string]any {
-	b, _ := os.ReadFile("public-auth-ed25519.pem")
-	pkey, err := jwt.ParseEdPublicKeyFromPEM(b)
+	if public_key == nil {
+		encoded_pub_key, _ := os.ReadFile("public-auth-ed25519.pem")
+		var err error
+		public_key, err = jwt.ParseEdPublicKeyFromPEM(encoded_pub_key)
 
-	if checkError(err) {
-		return nil
+		checkError(err)
 	}
 
 	token, err := jwt.Parse(token_string, func(t *jwt.Token) (any, error) {
-		return pkey, nil
+		return public_key, nil
 	})
 
 	if checkError(err) {
@@ -27,24 +31,34 @@ func decryptTokenString(token_string string) map[string]any {
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok {
-		debug(claims["sub"], claims["nbf"])
 		return claims
 	}
 	return nil
 }
 
-func createTokenString(username any) string {
-	data, _ := os.ReadFile("private-auth-ed25519.pem")
-	key, err := jwt.ParseEdPrivateKeyFromPEM(data)
+func createTokenString(username string) string {
+	if private_key == nil {
+		encoded_private_key, _ := os.ReadFile("private-auth-ed25519.pem")
+		var err error
+		private_key, err = jwt.ParseEdPrivateKeyFromPEM(encoded_private_key)
 
-	checkError(err)
+		checkError(err)
+	}
 
 	token := jwt.NewWithClaims(&jwt.SigningMethodEd25519{}, jwt.MapClaims{
 		"sub": username,
 		"nbf": time.Now().Unix(),
 	})
 
-	token_string, err := token.SignedString(key)
+	token_string, err := token.SignedString(private_key)
 	checkError(err)
 	return token_string
+}
+
+func getTokenFromHeader(header string) (string, error) {
+	tokens := strings.Split(header, " ")
+	if len(tokens) < 2 {
+		return "", fmt.Errorf("wrong header format")
+	}
+	return tokens[1], nil
 }

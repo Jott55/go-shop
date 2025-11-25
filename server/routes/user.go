@@ -69,7 +69,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	serverio.SendJson(w, user)
 }
 
-func User(router *chi.Mux) {
+func User(router chi.Router) {
 	noDb(dl)
 
 	router.Get("/user/create", createUsers)
@@ -84,24 +84,13 @@ func User(router *chi.Mux) {
 
 	router.Get("/user/{id}/delete", deleteUser)
 
-	router.Get("/user/{id}/cart", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/user/cart", func(w http.ResponseWriter, r *http.Request) {
 
-		tk := r.Header.Get("Authorization")
+		username := r.Context().Value(username_key).(string)
 
-		if len(tk) < 1 {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
+		debug(username)
 
-		claims := decryptTokenString(tk)
-		if len(claims) < 1 {
-			w.WriteHeader(http.StatusForbidden)
-		}
-
-		debug(claims, "You Got It!!!s")
-
-		user_id, _ := serverio.GetId(r)
-		cart_id := cart.GetIdByUserId(dl, user_id)
+		cart_id := cart.GetIdByUserId(dl, 1)
 		items := cart_item.GetByCartId(dl, cart_id)
 
 		productsItems := product.GetProductsFromItems(dl, items)

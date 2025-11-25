@@ -29,6 +29,8 @@ func Register(router *chi.Mux) {
 	})
 
 	router.Get("/test/{key}", func(w http.ResponseWriter, r *http.Request) {
-
+		key := chi.URLParam(r, "key")
+		claism := decryptTokenString(key)
+		debug(claism)
 	})
 }
