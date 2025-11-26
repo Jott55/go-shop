@@ -48,6 +48,7 @@ type DatabaseResponse struct {
 	msg string
 }
 
+// TODO: change database reponse to be only interface or something like that
 func (dr DatabaseResponse) String() string {
 	return dr.msg
 }
@@ -171,6 +172,8 @@ func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 
 	cols := strings.Join(names, ", ")
 	sql_string := fmt.Sprintf(`SELECT %v FROM %v WHERE %v`, cols, table, where)
+
+	debug(sql_string)
 
 	rows, err := dl.Query(sql_string)
 	if checkError(err) {

@@ -15,6 +15,12 @@ type UserId struct {
 	Id int
 }
 
+type UserProfile struct {
+	Name      string
+	Email     string
+	Photo_url string
+}
+
 func (u *UserService) Init(dl *database.DatabaseLink, table_name string) {
 	u.dl = dl
 	u.table = table_name
@@ -52,10 +58,23 @@ func (u *UserService) Delete(id int) error {
 	return u.dl.DeleteById(u.table, id)
 }
 
-func (u *UserService) GetIdByName(user_name string) (int, error) {
-	user := database.GenericGetWhere[UserId](u.dl, u.table, fmt.Sprintf("name=%s", user_name))
-	if len(user) == 1 {
+func (u *UserService) GetIdByName(username string) (int, error) {
+	user := database.GenericGetWhere[UserId](u.dl, u.table, fmt.Sprintf("name='%s'", username))
+	if len(user) >= 1 {
 		return user[0].Id, nil
 	}
-	return 0, CreateError(NOT_FOUND, "user of name: %s not found", user_name)
+	return 0, CreateError(NOT_FOUND, "user of name: %s not found", username)
+}
+
+func (u *UserService) GetProfileByName(username string) (*UserProfile, error) {
+	user := database.GenericGetWhere[UserProfile](u.dl, u.table, format("name='%s'", username))
+
+	size := len(user)
+
+	if size == 1 {
+		return &user[0], nil
+	} else if size > 1 {
+		return nil, CreateError(TOO_MANY, "too many users with same name")
+	}
+	return nil, CreateError(NOT_FOUND, "user not found")
 }

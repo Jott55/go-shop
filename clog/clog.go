@@ -1,6 +1,7 @@
 package clog
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -28,7 +29,8 @@ func Logger(level Level, skip int, info ...any) {
 	case ERROR:
 		logger.SetPrefix("ERROR: ")
 		pc, filename, line, _ := runtime.Caller(skip)
-		logger.Printf("at %s: %s %d\n\tWhat: %v", runtime.FuncForPC(pc).Name(), filename, line, info)
+		formaterr := fmt.Sprint(info...)
+		logger.Printf("at %s: %s %d\n\tWhat: %s", runtime.FuncForPC(pc).Name(), filename, line, formaterr)
 	case INFO:
 		logger.SetPrefix("INFO: ")
 		logger.Println(info...)

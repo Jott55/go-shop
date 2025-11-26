@@ -36,7 +36,6 @@ func SendJson(w http.ResponseWriter, v any) {
 	if checkError(err) {
 		return
 	}
-
 	w.Write(content)
 }
 func GetId(r *http.Request) (int, error) {

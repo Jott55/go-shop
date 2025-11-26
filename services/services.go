@@ -7,6 +7,7 @@ import (
 
 const (
 	NOT_FOUND int = iota
+	TOO_MANY
 )
 
 type IServiceError interface {
@@ -55,4 +56,8 @@ func CreateServices(dal *database.DatabaseLink, cart string, cart_item string, p
 	serve.Product = &ProductService{table: product, dl: dal}
 	serve.User = &UserService{table: user, dl: dal}
 	return serve
+}
+
+func format(f string, a ...any) string {
+	return fmt.Sprintf(f, a...)
 }

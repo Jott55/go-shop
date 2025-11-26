@@ -58,7 +58,7 @@ func createTokenString(username string) string {
 func getTokenFromHeader(header string) (string, error) {
 	tokens := strings.Split(header, " ")
 	if len(tokens) < 2 {
-		return "", fmt.Errorf("wrong header format")
+		return "", fmt.Errorf("wrong header format: %s", header)
 	}
 	return tokens[1], nil
 }

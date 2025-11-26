@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"jott55/go-shop/server/serverio"
 	"jott55/go-shop/services"
 	"jott55/go-shop/types"
@@ -11,9 +12,14 @@ import (
 )
 
 func getUsers(w http.ResponseWriter, r *http.Request) {
-	users := ser.User.GetWhere(0, 10)
+	// Get username from token
+	username := getKey[string](r, username_key)
+	debug("user name: ", username)
 
-	serverio.SendJson(w, users)
+	user, err := ser.User.GetProfileByName(username)
+	checkError(err)
+
+	serverio.SendJson(w, user)
 }
 
 func insertUser(w http.ResponseWriter, r *http.Request) {
@@ -83,15 +89,19 @@ func User(router chi.Router) {
 		debug(username)
 		user_id, err := ser.User.GetIdByName(username)
 
-		checkError(err)
-
-		if err.(services.ServiceError).Code() == services.NOT_FOUND {
-			ser.Cart.Insert(&types.CartNoId{User_id: user_id})
+		if checkError(err) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		cart_id, err := ser.Cart.GetIdByUserId(user_id)
 
-		checkError(err)
+		if checkError(err) {
+			if err.(services.ServiceError).Code() == services.NOT_FOUND {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+		}
 
 		items := ser.Cart_item.GetByCartId(cart_id)
 
@@ -99,11 +109,60 @@ func User(router chi.Router) {
 		serverio.SendJson(w, productsItems)
 	})
 
-	router.Get("/user/item/add", func(w http.ResponseWriter, r *http.Request) {
-		// Get product id and cart id
+	router.Post("/user/item/add", func(w http.ResponseWriter, r *http.Request) {
+		var (
+			err        error
+			pr         types.ProductIdRequest
+			product_id int
+			product    types.Product
+			cart_id    int
+			user_id    int
+			username   string
+			item       types.ItemNoId
+			itemless   *types.ItemNoIdCartIdProductId
+		)
+		// Get product id from request body
+		pr, err = serverio.GetStructFromRequestBody[types.ProductIdRequest](r)
+		checkError(err)
+		product_id = pr.Product_id
+
+		// Get user id
+		username = getKey[string](r, username_key)
+		debug("user", username)
+		user_id, err = ser.User.GetIdByName(username)
+		checkError(err)
+
+		// Get cart id
+		cart_id, err = ser.Cart.GetIdByUserId(user_id)
+		checkError(err)
 
 		// Check existent item by product id and cart id
+		itemless, err = ser.Cart_item.GetByCartIdProductId(cart_id, product_id)
+		checkError(err)
 
-		// if exists sum
+		// Get product price
+		product, err = ser.Product.Get(product_id)
+		checkError(err)
+
+		// if exists sum quantity
+		if itemless != nil && itemless.Price == product.Price {
+			// update item
+			checkError(fmt.Errorf("not implemented yet"))
+			w.WriteHeader(http.StatusNotImplemented)
+			return
+		}
+		// else create new item
+
+		// insert product id in new item
+		item.Product_id = product_id
+		// insert quantity in new item
+		item.Quantity = 1
+		// insert cart_id in new item
+		item.Cart_id = cart_id
+		// insert price from product in new item
+		item.Price = product.Price
+		// insert item on item table
+		ser.Cart_item.Insert(&item)
+		w.WriteHeader(http.StatusCreated)
 	})
 }

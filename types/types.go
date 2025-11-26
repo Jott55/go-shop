@@ -75,6 +75,12 @@ type ItemNoIdCartId struct {
 	Quantity   int
 	Price      int
 }
+
+type ItemNoIdCartIdProductId struct {
+	Quantity int
+	Price    int
+}
+
 type CartId struct {
 	Id int
 }

@@ -25,6 +25,18 @@ func (ci *CartItemService) Get(id int) (types.Item, error) {
 func (ci *CartItemService) GetWhere(id_min int, id_max int) []types.Item {
 	return database.GenericGetWhere[types.Item](ci.dl, ci.table, "true")
 }
+func (ci *CartItemService) GetByCartIdProductId(cart_id int, product_id int) (*types.ItemNoIdCartIdProductId, error) {
+	p := database.GenericGetWhere[types.ItemNoIdCartIdProductId](
+		ci.dl,
+		ci.table,
+		fmt.Sprintf("cart_id=%d AND product_id=%d", cart_id, product_id))
+
+	if len(p) >= 1 {
+		return &p[0], nil
+	}
+	return nil, CreateError(NOT_FOUND, "no items found")
+}
+
 func (ci *CartItemService) Insert(item *types.ItemNoId) database.DatabaseResponse {
 	return ci.dl.Insert(ci.table, item)
 }
