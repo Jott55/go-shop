@@ -36,3 +36,4 @@ config.json
 *.pem
 go-shop.so
 go-shop.exe
+test/token.txt

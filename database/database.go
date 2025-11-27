@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type IDatabase interface {
@@ -37,7 +38,7 @@ type DatabaseInfo struct {
 
 type DatabaseLink struct {
 	info *DatabaseInfo
-	con  *pgx.Conn
+	con  *pgxpool.Pool
 }
 
 type Response interface {
@@ -91,12 +92,15 @@ func (dl *DatabaseLink) Init() error {
 	}
 
 	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", db.User, db.Password, db.Host, db.Port, db.Database)
-	conn, err := pgx.Connect(context.Background(), url)
+	// conn, err := pgx.Connect(context.Background(), url)
+
+	pool, err := pgxpool.New(context.Background(), url)
+
 	if err != nil {
 		return err
 	}
 
-	dl.con = conn
+	dl.con = pool
 
 	return nil
 }
@@ -107,10 +111,12 @@ func (dl *DatabaseLink) Exec(sql string, args ...any) (DatabaseResponse, error) 
 }
 
 func (dl *DatabaseLink) Close() error {
-	return dl.con.Close(context.Background())
+	dl.con.Close()
+	return nil
 }
 
 func (dl *DatabaseLink) QueryRow(sql string, dest ...any) error {
+
 	return dl.con.QueryRow(context.Background(), sql).Scan(dest...)
 }
 
@@ -193,11 +199,11 @@ func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 func getStructFieldsAddress(v any) FieldAddress {
 	structPointer := reflect.ValueOf(v) // struct pointer
 
-	isPointer(structPointer.Kind())
+	// isPointer(structPointer.Kind())
 
 	s := structPointer.Elem() // struct
 
-	isStruct(s.Kind())
+	// isStruct(s.Kind())
 
 	length := s.NumField()
 
@@ -217,11 +223,11 @@ func getStructFieldsAddress(v any) FieldAddress {
 func getStructValues(v any) FieldValues {
 	structPointer := reflect.ValueOf(v) // struct pointer
 
-	isPointer(structPointer.Kind())
+	// isPointer(structPointer.Kind())
 
 	s := structPointer.Elem() // struct
 
-	isStruct(s.Kind())
+	// isStruct(s.Kind())
 
 	length := s.NumField()
 
@@ -241,7 +247,7 @@ func getStructNames[T any]() []string {
 
 	t := reflect.TypeFor[T]() // type
 
-	isStruct(t.Kind())
+	// isStruct(t.Kind())
 
 	length := t.NumField()
 
@@ -254,13 +260,13 @@ func getStructNames[T any]() []string {
 	return fieldsName
 }
 
-func isPointer(v reflect.Kind) bool {
-	return v == reflect.Pointer
-}
+// func isPointer(v reflect.Kind) bool {
+// 	return v == reflect.Pointer
+// }
 
-func isStruct(v reflect.Kind) bool {
-	return v == reflect.Struct
-}
+// func isStruct(v reflect.Kind) bool {
+// 	return v == reflect.Struct
+// }
 
 func (dl *DatabaseLink) DeleteById(table string, id int) error {
 	sql_delete := fmt.Sprintf("DELETE FROM %v WHERE id=%v", table, id)
