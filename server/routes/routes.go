@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"jott55/go-shop/clog"
-	"jott55/go-shop/database"
 	"jott55/go-shop/services"
 	"net/http"
 
@@ -29,13 +28,6 @@ func checkError(err error, msg ...any) bool {
 	return false
 }
 
-func noDb(dl *database.DatabaseLink) bool {
-	if dl == nil {
-		clog.Log(clog.ERROR, "no db connection, returning")
-		return true
-	}
-	return false
-}
 func debug(msg ...any) {
 	clog.Log(clog.DEBUG, msg...)
 }

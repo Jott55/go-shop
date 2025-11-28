@@ -21,6 +21,11 @@ type UserProfile struct {
 	Photo_url string
 }
 
+type UserLogin struct {
+	Password string
+	Name     string
+}
+
 func (u *UserService) Init(dl *database.DatabaseLink, table_name string) {
 	u.dl = dl
 	u.table = table_name
@@ -47,7 +52,7 @@ func (u *UserService) Create() {
 		id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 		name VARCHAR(50),
 		email VARCHAR(50),
-		password VARCHAR(64),
+		password VARCHAR(255),
 		photo_url VARCHAR(255)
 	`
 
@@ -68,6 +73,19 @@ func (u *UserService) GetIdByName(username string) (int, error) {
 
 func (u *UserService) GetProfileByName(username string) (*UserProfile, error) {
 	user := database.GenericGetWhere[UserProfile](u.dl, u.table, format("name='%s'", username))
+
+	size := len(user)
+
+	if size == 1 {
+		return &user[0], nil
+	} else if size > 1 {
+		return nil, CreateError(TOO_MANY, "too many users with same name")
+	}
+	return nil, CreateError(NOT_FOUND, "user not found")
+}
+
+func (u *UserService) GetUserByEmail(email string) (*UserLogin, error) {
+	user := database.GenericGetWhere[UserLogin](u.dl, u.table, format("email='%s'", email))
 
 	size := len(user)
 
