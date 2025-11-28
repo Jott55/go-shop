@@ -11,6 +11,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type UserItemQuantityRequest struct {
+	Modified []types.ItemQuantity
+}
+
 func getUsers(w http.ResponseWriter, r *http.Request) {
 	// Get username from token
 	username := getKey[string](r, username_key)
@@ -164,5 +168,26 @@ func User(router chi.Router) {
 		// insert item on item table
 		ser.Cart_item.Insert(&item)
 		w.WriteHeader(http.StatusCreated)
+	})
+
+	router.Post("/user/cart/update", func(w http.ResponseWriter, r *http.Request) {
+		a, err := serverio.GetStructFromRequestBody[UserItemQuantityRequest](r)
+		checkError(err)
+
+		debug("Id: ", a.Modified[0].Id, "Quantity:", a.Modified[0].Quantity)
+
+		// get user cart
+		username := getKey[string](r, username_key)
+		user_id, err := ser.User.GetIdByName(username)
+		checkError(err)
+		cart_id, err := ser.Cart.GetIdByUserId(user_id)
+		checkError(err)
+
+		// Change every modified quantity
+		// TODO: change to only one call e.g. where id=1 and id=2
+		for _, product := range a.Modified {
+			ser.Cart_item.UpdateQuantityByIds(&types.Quantity{Quantity: product.Quantity}, cart_id, product.Id)
+		}
+
 	})
 }

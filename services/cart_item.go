@@ -70,3 +70,7 @@ func (ci *CartItemService) Create() {
 func (ci *CartItemService) Delete(id int) error {
 	return ci.dl.DeleteById(ci.table, id)
 }
+
+func (ci *CartItemService) UpdateQuantityByIds(quantity *types.Quantity, cart_id int, product_id int) {
+	ci.dl.Update(ci.table, quantity, format("cart_id='%d' AND product_id='%d'", cart_id, product_id))
+}

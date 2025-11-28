@@ -113,3 +113,11 @@ type LoginUser struct {
 	Email    string
 	Password string
 }
+type ItemQuantity struct {
+	Id       int
+	Quantity int
+}
+
+type Quantity struct {
+	Quantity int
+}

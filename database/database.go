@@ -178,6 +178,26 @@ func (dl *DatabaseLink) Insert(table string, t any) DatabaseResponse {
 	return tag
 }
 
+func (dl *DatabaseLink) Update(table string, t any, where string) DatabaseResponse {
+	fv := getStructValues(t)
+
+	var values []string
+
+	for i := range fv.fieldName {
+		values = append(values, fmt.Sprintf(`%s='%v'`, fv.fieldName[i], fv.fieldValue[i]))
+	}
+
+	cols := strings.Join(values, ", ")
+
+	sql_update := fmt.Sprintf(`UPDATE %s SET %s WHERE %s`, table, cols, where)
+
+	debug(sql_update)
+	tag, err := dl.Exec(sql_update)
+
+	checkError(err)
+	return tag
+}
+
 func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 	names := getStructNames[T]()
 
