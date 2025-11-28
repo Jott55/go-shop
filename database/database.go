@@ -99,6 +99,11 @@ func (dl *DatabaseLink) Init() error {
 	if err != nil {
 		return err
 	}
+	err = pool.Ping(context.Background())
+
+	if err != nil {
+		return err
+	}
 
 	dl.con = pool
 
