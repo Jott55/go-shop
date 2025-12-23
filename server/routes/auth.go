@@ -2,11 +2,16 @@ package routes
 
 import (
 	"crypto"
+	"crypto/ed25519"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -61,4 +66,39 @@ func getTokenFromHeader(header string) (string, error) {
 		return "", fmt.Errorf("wrong header format: %s", header)
 	}
 	return tokens[1], nil
+}
+
+func Auth(router chi.Router) {
+	router.Get("/auth/create-pem-files", func(w http.ResponseWriter, r *http.Request) {
+		pubKey, privKey, err := ed25519.GenerateKey(nil)
+		checkError(err)
+
+		bPriv, err := x509.MarshalPKCS8PrivateKey(privKey)
+		checkError(err)
+		privPem := &pem.Block{
+			Type:    "PRIVATE KEY",
+			Headers: nil,
+			Bytes:   bPriv,
+		}
+
+		bPub, err := x509.MarshalPKIXPublicKey(pubKey)
+
+		pubPem := &pem.Block{
+			Type:    "PUBLIC KEY",
+			Headers: nil,
+			Bytes:   bPub,
+		}
+
+		privPemFile, err := os.Create("private-auth-ed25519.pem")
+		checkError(err)
+		pubPemFile, err := os.Create("public-auth-ed25519.pem")
+		checkError(err)
+
+		err = pem.Encode(privPemFile, privPem)
+		checkError(err)
+		err = pem.Encode(pubPemFile, pubPem)
+		checkError(err)
+
+		w.Write([]byte("Auth files created!"))
+	})
 }

@@ -22,7 +22,7 @@ import (
 
 var shopDB *database.DatabaseLink
 
-func checkFileExist(name string) bool {
+func checkFileNotExist(name string) bool {
 	file, err := os.Open(name)
 	file.Close()
 	return os.IsNotExist(err)
@@ -40,21 +40,23 @@ func debug(msg ...any) {
 	clog.Log(clog.DEBUG, msg...)
 }
 
-func getDatabaseInfoFromUser() database.DatabaseInfo {
+func getDatabaseInfoFromUser() *database.DatabaseInfo {
 	var db database.DatabaseInfo
-
-	fmt.Print("\nEnter user: ")
+	fmt.Print("\n(if you dont know enter 's', continue than access admin page for more info)\n\nEnter postgres user: ")
 	fmt.Scanf("%s", &db.User)
-	fmt.Print("\nEnter password: ")
+	if db.User == "s" {
+		return &db
+	}
+	fmt.Print("\nEnter postgres password: ")
 	fmt.Scanf("%s", &db.Password)
-	fmt.Print("\nEnter host: ")
+	fmt.Print("\nEnter postgres host: ")
 	fmt.Scanf("%s", &db.Host)
-	fmt.Print("\nEnter port: ")
+	fmt.Print("\nEnter postgres port: ")
 	fmt.Scanf("%s", &db.Port)
 	fmt.Print("\nEnter database name: ")
 	fmt.Scanf("%s", &db.Database)
 
-	return db
+	return &db
 }
 
 func createNewConfigFile(name string) {
@@ -82,18 +84,12 @@ func getConfigFileData() ([]byte, error) {
 
 func configure(dl *database.DatabaseLink) {
 	config_filename := "config.json"
-	if checkFileExist(config_filename) {
+	if checkFileNotExist(config_filename) {
 		createNewConfigFile(config_filename)
 	}
 	dat, err := getConfigFileData()
 
 	if checkError(err) {
-		return
-	}
-
-	if len(dat) < 64 {
-		createNewConfigFile(config_filename)
-		configure(dl)
 		return
 	}
 
@@ -153,7 +149,7 @@ func doRouterShit() {
 
 	var ser = services.CreateServices(shopDB, "cart", "cart_item", "products", "users")
 
-	clog.Log(clog.INFO, "initializing router\n", "\nClient Page at: http://localhost:8069/\nAccess admin page at http://localhost:8069/admin")
+	clog.Log(clog.INFO, "initializing router\n", "\nClient Page at: http://localhost:8069/\nAccess admin page for configuration at http://localhost:8069/admin")
 
 	router := chi.NewRouter()
 
@@ -192,7 +188,13 @@ func doRouterShit() {
 		ser.Product.Drop()
 		ser.User.Drop()
 	})
-
+	router.Get("/start", func(w http.ResponseWriter, r *http.Request) {
+		url := "http://localhost:8069"
+		http.Get(fmt.Sprintf("%s/deleteAllTables", url))
+		http.Get(fmt.Sprintf("%s/createAllTables", url))
+		http.Get(fmt.Sprintf("%s/auth/create-pem-files", url))
+		w.Write([]byte("go to http://localhost:8069"))
+	})
 	routes.Start(router, &ser)
 
 	FileServer(router, "/", http.Dir("client-page"))
@@ -231,6 +233,11 @@ func startDatabase(dl *database.DatabaseLink) {
 	if err != nil {
 		var str string
 
+		if dl.GetDBInfo() == nil {
+			clog.Log(clog.NULL, "Please enter in admin page for more information about database")
+			return
+		}
+
 		clog.Log(clog.ERROR, "Database ERROR")
 		fmt.Println("want to continue anyway? (y/n) change config (c)? rerun? (r)")
 		fmt.Scanf("%s", &str)
@@ -245,10 +252,8 @@ func startDatabase(dl *database.DatabaseLink) {
 		case "r": //  retry
 			startDatabase(dl)
 			return
-		case "y": // exit function
+		default: // exit function
 			return
-		default: // retry
-			startDatabase(dl)
 		}
 	} else {
 		fmt.Println("database Initialized")

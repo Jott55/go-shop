@@ -13,8 +13,8 @@ const (
 	ERROR Level = iota
 	INFO
 	DEBUG
-	HANDLER
 	WARNING
+	NULL
 )
 
 func Log(level Level, info ...any) {

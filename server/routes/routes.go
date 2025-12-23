@@ -81,4 +81,5 @@ func Start(mux *chi.Mux, s *services.Services) {
 	Login(mux)
 	Product(mux)
 	Register(mux)
+	Auth(mux)
 }

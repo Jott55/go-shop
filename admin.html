@@ -6,7 +6,14 @@
     <title>BOSS</title>
 </head>
 <body>
-    <form action="/product">
+    <h1>Setup your server with this button</h1>
+    <form action="/start">
+        <span>➡️</span><button style="margin-left: 1rem; font-size: large;">Create all configurations</button>
+    </form>
+    <p>reminder: it resets all your db</p>
+    <p>If getting null pointer error probably means that you not configurate your database correctly</p>
+    <br><br>
+    <form action="/product" >
         <button>Get products</button>
     </form>
     <form action="/create/products">
@@ -24,5 +31,27 @@
     <form action="/deleteAllTables">
         <button>Delete all tables</button>
     </form>
+    <form action="/auth/create-pem-files">
+        <button>Create private and public key</button>
+    </form>
+    <h1>How to run postgres server in Linux</h1>
+    <h2>1. Download podman or docker for your distribution</h2>
+    <h2>2. Run the following code</h2>
+    <p>Before running the container run the following command (defining container variables)</p>
+    <pre>export yourPassword=1234</pre>
+    <pre>export youUser=$USER</pre>
+    <h3>In Docker</h3>
+    <pre>docker run --name shop-postgres -e POSTGRES_PASSWORD=$yourPassword -e POSTGRES_USER=$yourUser -d postgres</pre>
+    <h3>In podman</h3>
+    <pre>podman run --name shop-postgres -e POSTGRES_PASSWORD=$yourPassword -e POSTGRES_USER=$yourUser -d docker.io/postgres</pre>
+    <h2>3. Than use should have a container image of postgres running in background</h2>
+    <p>so your <em>user</em> and <em>database name</em> should be <strong>$USER</strong> -- meaning your desktop username, that appears when entering this command `echo $USER`</p>
+    <p>the default <em>password</em> is <strong>1234</strong></p>
+    <p>the <em>host</em> is <strong>localhost</strong></p>
+    <p>and the default <em>port</em> for postgres is <strong>5432</strong></p>
+    <h2>What if my container stoped?</h2>
+    <p>you should read the docker or podman documentation but if it just stopped cuz you restarted your pc it you could start it again using</p>
+    <pre>docker start shop-postgres</pre>
+    <pre>podman start shop-postgres</pre>
 </body>
 </html>

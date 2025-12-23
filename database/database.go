@@ -84,6 +84,10 @@ func (dl *DatabaseLink) Configure(dinfo DatabaseInfo) {
 	dl.info = &dinfo
 }
 
+func (dl *DatabaseLink) GetDBInfo() *DatabaseInfo {
+	return dl.info
+}
+
 func (dl *DatabaseLink) Init() error {
 	db := dl.info
 
