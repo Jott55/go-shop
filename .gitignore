@@ -34,6 +34,6 @@ go.work.sum
 # Custom
 config.json
 *.pem
-go-shop.so
+go-shop.elf
 go-shop.exe
 test/token.txt
