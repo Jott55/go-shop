@@ -42,9 +42,9 @@
     <pre>export yourUser=$USER</pre>
     <p>you can change the values for your needs</p>
     <h3>In Docker</h3>
-    <pre>sudo docker run --name shop-postgres -e "POSTGRES_PASSWORD=$yourPassword" -e "POSTGRES_USER=$yourUser" -d postgres</pre>
+    <pre>sudo docker run --name shop-postgres -e "POSTGRES_PASSWORD=$yourPassword" -e "POSTGRES_USER=$yourUser" -p 5432:5432 -d postgres</pre>
     <h3>In Podman</h3>
-    <pre>podman run --name shop-postgres -e "POSTGRES_PASSWORD=$yourPassword" -e "POSTGRES_USER=$yourUser" -d docker.io/postgres</pre>
+    <pre>podman run --name shop-postgres -e "POSTGRES_PASSWORD=$yourPassword" -e "POSTGRES_USER=$yourUser" -p 5432:5432 -d docker.io/postgres</pre>
     <h2>3. Than use should have a container image of postgres running in background</h2>
     <p>so your <em>user</em> and <em>database name</em> should be <strong>$yourUser</strong> -- meaning the variable you defined using export yourUser=$USER -- If not modified the name should be <strong>your</strong> desktop <strong>username</strong>, that appears when entering this command <em>`echo $USER`</em></p>
     <p>the default <em>password</em> is <strong>1234</strong></p>
