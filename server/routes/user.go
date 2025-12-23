@@ -186,6 +186,13 @@ func User(router chi.Router) {
 		// Change every modified quantity
 		// TODO: change to only one call e.g. where id=1 and id=2
 		for _, product := range a.Modified {
+			if product.Quantity <= 0 {
+				id, err := ser.Cart_item.GetIdByCartIdProductId(cart_id, product.Id)
+				checkError(err)
+				err = ser.Cart_item.Delete(*id)
+				checkError(err)
+				continue
+			}
 			ser.Cart_item.UpdateQuantityByIds(&types.Quantity{Quantity: product.Quantity}, cart_id, product.Id)
 		}
 

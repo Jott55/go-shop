@@ -222,49 +222,40 @@ func GenericGetWhere[T any](dl *DatabaseLink, table string, where string) []T {
 
 // Get address of the fields of the struct v
 func getStructFieldsAddress(v any) FieldAddress {
-	structPointer := reflect.ValueOf(v) // struct pointer
+	var value = reflect.ValueOf(v)
 
-	// isPointer(structPointer.Kind())
+	for value.Kind() != reflect.Struct {
+		value = value.Elem()
+	}
 
-	s := structPointer.Elem() // struct
-
-	// isStruct(s.Kind())
-
-	length := s.NumField()
+	t := value.Type()
 
 	var res FieldAddress
 
-	t := s.Type() // struct type
-
-	for i := range length {
+	for i := range value.NumField() {
 		res.fieldName = append(res.fieldName, t.Field(i).Name)
-		res.fieldAddress = append(res.fieldAddress, s.Field(i).Addr().Interface())
+		res.fieldAddress = append(res.fieldAddress, value.Field(i).Addr().Interface())
 	}
-
 	return res
 }
 
 // Get the value of the fields of the struct *v
 func getStructValues(v any) FieldValues {
-	structPointer := reflect.ValueOf(v) // struct pointer
 
-	// isPointer(structPointer.Kind())
+	var value = reflect.ValueOf(v)
 
-	s := structPointer.Elem() // struct
+	for value.Kind() != reflect.Struct {
+		value = value.Elem()
+	}
 
-	// isStruct(s.Kind())
-
-	length := s.NumField()
+	t := value.Type()
 
 	var res FieldValues
 
-	t := s.Type() // struct type
-
-	for i := range length {
-		res.fieldName = append(res.fieldName, t.Field(i).Name)          // field name
-		res.fieldValue = append(res.fieldValue, s.Field(i).Interface()) // field value
+	for i := range value.NumField() {
+		res.fieldName = append(res.fieldName, t.Field(i).Name)
+		res.fieldValue = append(res.fieldValue, value.Field(i).Interface())
 	}
-
 	return res
 }
 

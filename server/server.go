@@ -103,10 +103,6 @@ func configure(dl *database.DatabaseLink) {
 	dl.Configure(di)
 }
 
-func mainPage(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello... what are you doing here???? anyway check my discord: @wasenokkami"))
-}
-
 func admin(w http.ResponseWriter, r *http.Request) {
 	file, err := os.ReadFile("admin.html")
 
@@ -173,8 +169,6 @@ func doRouterShit() {
 		},
 	))
 
-	router.Get("/", mainPage)
-
 	router.Get("/admin", admin) // admin page
 
 	router.Get("/generate", func(w http.ResponseWriter, r *http.Request) {
@@ -201,12 +195,33 @@ func doRouterShit() {
 
 	routes.Start(router, &ser)
 
+	FileServer(router, "/", http.Dir("client-page"))
 	err := http.ListenAndServe(":8069", router)
 	if err != nil {
 		clog.Log(clog.ERROR, err)
 		return
 	}
 
+}
+
+// from chi fileserver example
+func FileServer(r chi.Router, path string, root http.FileSystem) {
+	if strings.ContainsAny(path, "{}*") {
+		panic("FileServer does not permit any URL parameters.")
+	}
+
+	if path != "/" && path[len(path)-1] != '/' {
+		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
+		rctx := chi.RouteContext(r.Context())
+		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
+		fs.ServeHTTP(w, r)
+	})
 }
 
 func startDatabase(dl *database.DatabaseLink) {

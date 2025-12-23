@@ -67,7 +67,6 @@ func Start(mux *chi.Mux, s *services.Services) {
 
 	mux.Group(func(router chi.Router) {
 		router.Use(LoginMiddleware)
-
 		router.Get("/viponly", func(w http.ResponseWriter, r *http.Request) {
 
 			s := fmt.Sprintf("You made it! %v", r.Context().Value(username_key))

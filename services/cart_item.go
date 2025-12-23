@@ -6,6 +6,10 @@ import (
 	"jott55/go-shop/types"
 )
 
+type CartItemId struct {
+	Id int
+}
+
 type CartItemService struct {
 	dl    *database.DatabaseLink
 	table string
@@ -73,4 +77,12 @@ func (ci *CartItemService) Delete(id int) error {
 
 func (ci *CartItemService) UpdateQuantityByIds(quantity *types.Quantity, cart_id int, product_id int) {
 	ci.dl.Update(ci.table, quantity, format("cart_id='%d' AND product_id='%d'", cart_id, product_id))
+}
+
+func (ci *CartItemService) GetIdByCartIdProductId(cart_id int, product_id int) (*int, error) {
+	p := database.GenericGetWhere[CartItemId](ci.dl, ci.table, format("cart_id='%d' AND product_id='%d'", cart_id, product_id))
+	if len(p) >= 1 {
+		return &p[0].Id, nil
+	}
+	return nil, CreateError(NOT_FOUND, "no items found")
 }
