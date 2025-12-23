@@ -16,6 +16,7 @@ go build -o go-shop.exe
 ```
 
 Enter http://localhost:8069/ to utilize
+
 Enter http://localhost:8069/admin for some options (WIP)
 
 Frontend implementation from [js-shop](https://github.com/jott55/js-shop)
