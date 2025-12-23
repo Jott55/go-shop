@@ -153,7 +153,7 @@ func doRouterShit() {
 
 	var ser = services.CreateServices(shopDB, "cart", "cart_item", "products", "users")
 
-	clog.Log(clog.INFO, "initializing router\n", "Access admin page at http://localhost:8069/admin")
+	clog.Log(clog.INFO, "initializing router\n", "\nClient Page at: http://localhost:8069/\nAccess admin page at http://localhost:8069/admin")
 
 	router := chi.NewRouter()
 
