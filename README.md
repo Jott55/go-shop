@@ -10,7 +10,7 @@ go run .
 
 Alternatively you can build using linux/windows
 ```
-go build -o go-shop.so 
+go build -o go-shop.elf
 ----------------------- 
 go build -o go-shop.exe
 ```
